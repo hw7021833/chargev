@@ -1,0 +1,1545 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0"
+    />
+    <title>EV Charge Calc Pro</title>
+    <style>
+      *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+      :root{
+        --bg:#080E1D;--card:#0F1829;--border:#1A2840;--accent:#00D4FF;
+        --green:#00E5A0;--yellow:#FFD166;--red:#FF4560;--text:#E0EFFF;
+        --muted:#5A7FA0;--input:#07101F;--receipt:#f9f9f9;
+        --orange:#FF9500;
+      }
+      html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:15px}
+body{padding:0 0 80px;max-width:460px;margin:0 auto; transition: background-color 0.4s ease;}
+
+/* TEMA WARNA TAB */
+body.theme-calc { background: var(--bg); }
+body.theme-log { background: #061118; } /* Biru kehijauan sangat gelap */
+body.theme-analysis { background: #110B18; } /* Ungu sangat gelap */
+
+/* STRUKTUR TAB & ANIMASI */
+.tab-pane { display: none; }
+.tab-pane.active { display: block; animation: tabFade 0.3s ease forwards; }
+@keyframes tabFade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+/* BOTTOM NAV BAR */
+.bottom-nav {
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 999;
+  max-width: 460px; margin: 0 auto;
+  background: rgba(15, 24, 41, 0.85); /* Sesuai var(--card) tapi transparan */
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  border-top: 1px solid rgba(255,255,255,0.05);
+  display: flex; justify-content: space-around; padding: 10px 0 calc(10px + env(safe-area-inset-bottom));
+}
+.nav-item {
+  flex: 1; text-align: center; color: var(--muted); 
+  font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;
+  cursor: pointer; transition: color 0.3s;
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+}
+.nav-item.active { color: var(--accent); }
+.nav-icon { font-size: 20px; transition: transform 0.2s, filter 0.2s; filter: grayscale(100%) opacity(70%); }
+.nav-item.active .nav-icon { filter: grayscale(0%) opacity(100%); transform: translateY(-2px); }
+.nav-item:active .nav-icon { transform: scale(0.85); }
+
+      /* HEADER */
+      .header{text-align:center;padding:24px 16px 16px;border-bottom:1px solid var(--border);background:var(--card)}
+      .header-icon{font-size:32px;margin-bottom:6px}
+      .header h1{font-size:20px;font-weight:800;letter-spacing:-0.02em;color:var(--text)}
+      .header p{font-size:12px;color:var(--muted);margin-top:4px}
+
+      /* SECTION */
+      .section{padding:16px 16px 0}
+      .section-label{font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--accent);margin-bottom:12px}
+
+      /* FIELD & RANGE SLIDER */
+      .field{margin-bottom:18px}
+      .field label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:6px}
+      
+      .range-header {display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:8px;}
+      .range-header label {margin-bottom:0;}
+      .range-val-disp {font-size:18px;font-weight:800;color:var(--text);background:var(--input);padding:4px 12px;border-radius:8px;border:1px solid var(--border);}
+      .range-val-disp span.unit {font-size:12px;color:var(--muted);margin-left:2px;font-weight:600;}
+.range-val-disp input[type="number"] {
+  background: transparent; border: none; color: inherit; 
+  font-size: inherit; font-weight: inherit; font-family: inherit;
+  width: 38px; text-align: right; outline: none; padding: 0;
+}
+/* Menyembunyikan tombol panah atas/bawah bawaan browser */
+.range-val-disp input[type="number"]::-webkit-outer-spin-button,
+.range-val-disp input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none; margin: 0;
+}
+      
+      input[type=range] {
+        -webkit-appearance:none;width:100%;background:transparent;margin:6px 0 10px;
+      }
+      input[type=range]:focus {outline:none;}
+      input[type=range]::-webkit-slider-runnable-track {
+        width:100%;height:8px;cursor:pointer;background:var(--border);border-radius:4px;
+      }
+      input[type=range]::-webkit-slider-thumb {
+        height:24px;width:24px;border-radius:50%;background:var(--accent);
+        cursor:pointer;-webkit-appearance:none;margin-top:-8px;
+        box-shadow:0 0 10px rgba(0,212,255,0.4);border:2px solid #fff;
+      }
+
+      /* =================== EV PICKER =================== */
+      .ev-picker-wrap {margin-bottom: 14px;}
+      .ev-selected-display {
+        background: rgba(0,212,255,0.07);border: 1.5px solid rgba(0,212,255,0.35);
+        border-radius: 10px;padding: 11px 14px;display: flex;
+        align-items: center;justify-content: space-between;cursor: pointer;
+        transition: all 0.2s;
+      }
+      .ev-selected-display:hover {border-color:var(--accent);}
+      .ev-selected-name {font-size:14px;font-weight:700;color:var(--text);}
+      .ev-selected-kwh {font-size:12px;color:var(--accent);font-weight:600;margin-top:2px;}
+      .ev-selected-chevron {color:var(--muted);font-size:12px;flex-shrink:0;}
+      .ev-selected-right {display:flex;align-items:center;gap:10px;flex-shrink:0;}
+      .ev-default-star {
+        font-size:17px;line-height:1;cursor:pointer;color:var(--muted);
+        transition:color 0.2s, transform 0.15s;
+      }
+      .ev-default-star:active{transform:scale(0.85);}
+      .ev-default-star.is-default{color:var(--yellow);}
+      .ev-default-toast {
+        font-size:11px;color:var(--green);font-weight:600;
+        margin-top:6px;text-align:center;
+        max-height:0;opacity:0;overflow:hidden;transition:all 0.3s ease;
+      }
+      .ev-default-toast.show{max-height:20px;opacity:1;}
+      .ev-dropdown {
+        background:var(--card);border:1.5px solid var(--border);border-radius:10px;
+        overflow:hidden;margin-top:4px;max-height:0;
+        transition:max-height 0.3s ease, opacity 0.2s;opacity:0;pointer-events:none;
+      }
+      .ev-dropdown.open {max-height:280px;opacity:1;pointer-events:auto;overflow-y:auto;}
+      .ev-dropdown::-webkit-scrollbar{width:4px}
+      .ev-dropdown::-webkit-scrollbar-track{background:transparent}
+      .ev-dropdown::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+      .ev-group-label {
+        font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;
+        color:var(--accent);padding:10px 14px 5px;background:rgba(0,212,255,0.04);
+        border-bottom:1px solid var(--border);position:sticky;top:0;
+      }
+      .ev-option {
+        padding:10px 14px;font-size:13px;font-weight:600;color:var(--text);
+        cursor:pointer;display:flex;justify-content:space-between;align-items:center;
+        border-bottom:1px solid rgba(26,40,64,0.5);transition:background 0.15s;
+      }
+      .ev-option:hover{background:rgba(0,212,255,0.07);}
+      .ev-option.selected{background:rgba(0,212,255,0.12);color:var(--accent);}
+      .ev-option-kwh{font-size:11px;color:var(--muted);font-weight:500;}
+      .ev-option-type{
+        font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;
+        margin-left:6px;flex-shrink:0;
+      }
+      .ev-option-type.LFP{background:rgba(0,229,160,0.15);color:var(--green);}
+      .ev-option-type.NMC{background:rgba(255,209,102,0.15);color:var(--yellow);}
+
+      /* =================== CHARGER TOGGLE =================== */
+      .charger-mode-toggle {
+        display: flex;background: var(--input);border: 1.5px solid var(--border);
+        border-radius: 10px;overflow: hidden;margin-bottom: 14px;
+      }
+      .charger-mode-btn {
+        flex: 1;padding: 11px 8px;text-align: center;font-size: 12px;
+        font-weight: 700;color: var(--muted);cursor: pointer;
+        transition: all 0.2s;border: none;background: transparent;
+      }
+      .charger-mode-btn.active {background: rgba(0,212,255,0.12);color: var(--accent);border-radius: 8px;}
+      .charger-mode-icon {font-size:16px;display:block;margin-bottom:2px;}
+
+      /* =================== CHARGER GRIDS =================== */
+      .charger-grid {
+        display: grid;grid-template-columns: repeat(2, 1fr);gap: 10px;margin-bottom: 14px;
+      }
+      .charger-card {
+        background: var(--input);border: 1.5px solid var(--border);border-radius: 10px;
+        padding: 12px 10px;text-align: center;cursor: pointer;transition: all 0.2s ease;
+        display: flex;flex-direction: column;align-items: center;justify-content: center;
+      }
+      .charger-card:active {transform: scale(0.97);}
+      .charger-card.active {border-color: var(--accent);background: rgba(0, 212, 255, 0.08);}
+      .charger-icon {font-size: 22px;margin-bottom: 4px;}
+      .charger-name {font-size: 13px;font-weight: 700;color: var(--text);}
+      .charger-sub {font-size: 10px;color: var(--muted);margin-top: 2px;}
+
+      /* Toggles (Night, AC, Sun) */
+      .extra-toggles-box {
+        background:var(--input);border:1.5px solid var(--border);
+        border-radius:10px;padding:12px;margin-bottom:18px;
+      }
+#extraTogglesBox { 
+  transition: background 0.4s ease, border-color 0.4s ease; 
+}
+.theme-ice { 
+  background: linear-gradient(135deg, rgba(0,212,255,0.15), var(--input)) !important; 
+  border-color: rgba(0,212,255,0.4) !important; 
+}
+.theme-sand { 
+  background: linear-gradient(135deg, rgba(255,149,0,0.15), var(--input)) !important; 
+  border-color: rgba(255,149,0,0.4) !important; 
+}
+.theme-mixed { 
+  background: linear-gradient(135deg, rgba(0,212,255,0.15), rgba(255,149,0,0.15)) !important; 
+  border-color: var(--accent) !important; 
+}
+      .extra-toggles-title {font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:10px;}
+      
+      .toggle-wrap {
+        display:flex;align-items:center;justify-content:space-between;
+        background:rgba(255,255,255,0.02);border-radius:8px;padding:10px;margin-bottom:8px;
+      }
+      .toggle-wrap:last-child {margin-bottom:0;}
+      .toggle-wrap.highlight {background:rgba(255,209,102,0.06);border:1px solid rgba(255,209,102,0.25);}
+      
+      .toggle-label {font-size:13px;font-weight:600;color:var(--text);}
+      .toggle-sub {font-size:11px;color:var(--muted);margin-top:2px;line-height:1.3;}
+      
+      .toggle-switch {position:relative;width:40px;height:22px;flex-shrink:0;margin-left:12px;}
+      .toggle-switch input{opacity:0;width:0;height:0;}
+      .toggle-slider {
+        position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;
+        background:var(--border);border-radius:24px;transition:0.3s;
+      }
+      .toggle-slider:before {
+        position:absolute;content:"";height:16px;width:16px;left:3px;bottom:3px;
+        background:#fff;border-radius:50%;transition:0.3s;
+      }
+      input:checked + .toggle-slider{background:var(--accent);}
+      input:checked + .toggle-slider.yellow{background:var(--yellow);}
+      input:checked + .toggle-slider:before{transform:translateX(18px);}
+
+      /* INFO BOX */
+      .info-box{
+        background:rgba(0,212,255,0.05);border:1px solid rgba(0,212,255,0.2);
+        border-radius:10px;padding:12px;margin-bottom:16px;
+      }
+      .info-box h3{font-size:12px;color:var(--accent);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.05em}
+      .info-box p{font-size:12px;color:var(--text);line-height:1.5;margin-bottom:6px}
+      .info-box p:last-child{margin-bottom:0}
+      .info-box span.lbl{color:var(--muted);font-weight:600;margin-right:4px}
+      
+      .golden-rule{background:rgba(255,209,102,0.08);border:1px solid rgba(255,209,102,0.3);}
+      .golden-rule h3{color:var(--yellow);}
+
+      /* DC 100% WARNING */
+      .warning-banner {
+        display:none;background:rgba(255,69,96,0.1);border:1.5px solid rgba(255,69,96,0.5);
+        border-radius:10px;padding:12px 14px;margin-bottom:14px;animation: pulseWarn 2s infinite;
+      }
+      .warning-banner.show{display:flex;align-items:flex-start;gap:10px;}
+      @keyframes pulseWarn{0%,100%{border-color:rgba(255,69,96,0.5)}50%{border-color:rgba(255,69,96,0.9)}}
+      .warning-icon{font-size:20px;flex-shrink:0;margin-top:1px;}
+      .warning-title{font-size:13px;font-weight:700;color:var(--red);margin-bottom:3px;}
+      .warning-body{font-size:12px;color:var(--text);line-height:1.5;}
+
+      /* REAL BATTERY VISUALIZATION */
+      .batt-viz{background:var(--input);border:1.5px solid var(--border);border-radius:11px;padding:16px 14px;margin-bottom:16px}
+      .batt-container {display:flex;align-items:center;margin-bottom:10px;padding-right:4px;}
+      .batt-body {
+        height:28px;background:#050C18;border-radius:6px;border:1.5px solid var(--border);
+        position:relative;overflow:hidden;flex:1;
+      }
+      .batt-cap {width:6px;height:14px;background:var(--border);border-radius:0 3px 3px 0;margin-left:3px;}
+      .batt-fill{height:100%;border-radius:4px 0 0 4px;transition:all 0.4s ease}
+      .batt-need{
+        position:absolute;top:0;height:100%;
+        background:repeating-linear-gradient(90deg,rgba(0,212,255,0.3) 0 6px,transparent 6px 12px);
+        border-right:2px dashed var(--accent);transition:all 0.4s ease
+      }
+      .batt-slow-zone {
+        position:absolute;top:0;right:0;width:20%;height:100%;
+        background:repeating-linear-gradient(90deg,rgba(255,149,0,0.1) 0 4px,transparent 4px 8px);
+        border-left:1px dashed rgba(255,149,0,0.4);
+      }
+      .batt-labels{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);font-weight:600}
+
+      /* KWH HIGHLIGHT BOX */
+      .kwh-highlight-box {
+        background:linear-gradient(135deg,rgba(0,212,255,0.18),rgba(0,229,160,0.12));
+        border:2px solid var(--accent);border-radius:12px;padding:16px;
+        margin-bottom:16px;text-align:center;box-shadow:0 4px 14px rgba(0,212,255,0.25);
+      }
+      .kwh-title{font-size:11px;font-weight:700;letter-spacing:0.08em;color:var(--accent);margin-bottom:6px;}
+      .kwh-value{font-size:34px;font-weight:800;color:var(--green);line-height:1.2;}
+      .kwh-rounded{font-size:13px;color:var(--text);margin-top:6px;background:rgba(0,0,0,0.25);padding:6px;border-radius:6px;}
+
+      /* DURATION BOX */
+      .duration-box {
+        background:linear-gradient(135deg,rgba(255,149,0,0.15),rgba(255,209,102,0.08));
+        border:2px solid rgba(255,149,0,0.7);border-radius:12px;
+        padding:14px 16px;margin-bottom:16px;box-shadow:0 4px 14px rgba(255,149,0,0.18);
+      }
+      .duration-top {display:flex;align-items:center;gap:14px;}
+      .duration-icon{font-size:28px;flex-shrink:0;}
+      .duration-content{flex:1;}
+      .duration-title{font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#FF9500;margin-bottom:4px;}
+      .duration-value{font-size:22px;font-weight:800;color:#FFD166;line-height:1.2;}
+      .duration-sub{font-size:11px;color:var(--muted);margin-top:3px;}
+      .duration-badge{
+        background:rgba(255,149,0,0.2);border:1px solid rgba(255,149,0,0.5);
+        border-radius:8px;padding:4px 10px;font-size:11px;font-weight:700;
+        color:var(--orange);flex-shrink:0;text-align:center;line-height:1.4;
+      }
+      .slow-zone-note {
+        margin-top:10px;padding-top:10px;border-top:1px dashed rgba(255,149,0,0.35);
+        font-size:11px;color:rgba(255,220,120,0.85);line-height:1.5;display:none;
+      }
+      .slow-zone-note.show{display:block;}
+
+      /* RECEIPT */
+      .receipt-container{margin:16px 16px 32px;background:var(--receipt);border-radius:12px;color:#333;padding:16px;box-shadow:0 8px 16px rgba(0,0,0,0.4)}
+      .receipt-title{text-align:center;font-size:14px;font-weight:700;margin-bottom:12px;border-bottom:1px dashed #ccc;padding-bottom:12px}
+      .receipt-row{display:flex;justify-content:space-between;font-size:13px;margin-bottom:8px}
+      .receipt-row.bold{font-weight:700;margin-top:12px;border-top:1px dashed #ccc;padding-top:12px;font-size:14px;color:#d32f2f}
+      .receipt-row span:last-child{text-align:right}
+      .kwh-info{text-align:center;font-size:11px;color:#666;margin-top:16px;padding-top:12px;border-top:1px solid #eee}
+      .receipt-night-badge {
+        display:none;text-align:center;margin-top:8px;background:rgba(255,209,102,0.15);
+        border:1px solid rgba(255,209,102,0.4);border-radius:6px;padding:6px 10px;
+        font-size:11px;font-weight:600;color:#856a00;
+      }
+      .receipt-night-badge.show{display:block;}
+
+      /* HIDDEN PANEL */
+      .panel{display:none;}
+      .panel.active{display:block;}
+/* =================== MODUL 4: LOG & ANALYSIS =================== */
+.btn-primary { width:100%; background:var(--accent); color:#000; font-weight:800; border:none; padding:12px; border-radius:8px; cursor:pointer; font-size:14px; transition:0.2s; }
+.btn-primary:active { transform:scale(0.97); }
+.btn-secondary { width:100%; background:rgba(0,212,255,0.1); color:var(--accent); border:1px dashed var(--accent); font-weight:700; padding:10px; border-radius:8px; cursor:pointer; margin-top:14px; font-size:12px; transition:0.2s;}
+.btn-secondary:active { background:rgba(0,212,255,0.2); }
+
+.log-form { background:var(--card); border:1.5px solid var(--border); border-radius:12px; padding:14px; margin-bottom:20px; display:none; }
+.log-row { display:flex; gap:10px; margin-bottom:12px; }
+.log-col { flex:1; }
+.log-col label { display:block; font-size:10px; color:var(--muted); margin-bottom:4px; font-weight:700; text-transform:uppercase;}
+.log-col input, .log-col select { width:100%; background:var(--input); border:1px solid var(--border); color:var(--text); padding:9px 10px; border-radius:8px; outline:none; font-size:13px; }
+.log-col input:focus { border-color:var(--accent); }
+
+.log-item { background:var(--input); border:1px solid var(--border); border-radius:10px; padding:12px; margin-bottom:10px; }
+.log-item-header { display:flex; justify-content:space-between; font-size:11px; color:var(--muted); border-bottom:1px dashed var(--border); padding-bottom:6px; margin-bottom:8px; }
+.log-item-body { display:flex; justify-content:space-between; align-items:center; }
+.log-item-title { font-size:13px; font-weight:800; color:var(--text); }
+.log-item-sub { font-size:11px; color:var(--muted); margin-top:3px; }
+.log-item-cost { font-size:14px; font-weight:800; color:var(--green); text-align:right;}
+.del-btn { color:var(--red); cursor:pointer; font-weight:bold; }
+.edit-btn { color:var(--yellow); cursor:pointer; font-weight:bold; margin-right:12px; }
+.log-month-group { margin-bottom: 12px; }
+.log-month-header {
+  background: rgba(0, 212, 255, 0.08); padding: 10px 14px; border-radius: 8px;
+  display: flex; justify-content: space-between; align-items: center;
+  cursor: pointer; font-size: 13px; font-weight: 700; color: var(--accent);
+  border: 1px solid rgba(0, 212, 255, 0.2); transition: background 0.2s;
+}
+.log-month-header:active { background: rgba(0, 212, 255, 0.15); }
+.log-month-content {
+  max-height: 0; overflow: hidden; transition: max-height 0.4s ease; opacity: 0;
+}
+.log-month-content.open {
+  max-height: 3000px; opacity: 1; margin-top: 10px;
+}
+.log-month-chevron { transition: transform 0.3s; font-size: 10px; }
+.log-month-chevron.open { transform: rotate(180deg); }
+
+      /* MODAL POP-UP & BOX ANALYSIS */
+      .modal-overlay { display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); backdrop-filter:blur(5px); -webkit-backdrop-filter:blur(5px); z-index:9999; justify-content:center; align-items:center; padding:20px; }
+      .modal-overlay.show { display:flex; animation:fadeIn 0.2s; }
+      .modal-content { background:var(--bg); border:1.5px solid var(--border); border-radius:14px; padding:20px; width:100%; max-width:400px; max-height:80vh; overflow-y:auto; position:relative; box-shadow:0 10px 30px rgba(0,0,0,0.5); }
+      .modal-close { position:absolute; top:16px; right:16px; font-size:18px; color:var(--muted); cursor:pointer; width:30px; height:30px; display:flex; align-items:center; justify-content:center; background:var(--input); border-radius:50%; }
+      .ana-box { background:linear-gradient(135deg, rgba(0,212,255,0.08), rgba(0,229,160,0.03)); border:1.5px solid var(--accent); border-radius:12px; padding:18px; text-align:center; margin-bottom:14px; cursor:pointer; transition:0.2s; box-shadow:0 4px 12px rgba(0,212,255,0.1); }
+      .ana-box:active { transform:scale(0.97); }
+      .ana-box-title { font-size:11px; font-weight:700; color:var(--text); letter-spacing:0.05em; margin-bottom:8px; }
+      .ana-box-cost { font-size:26px; font-weight:800; color:var(--green); }
+      .stat-row { display:flex; justify-content:space-between; font-size:12px; border-bottom:1px dashed rgba(255,255,255,0.1); padding:10px 0; }
+      .stat-row:last-child { border-bottom:none; }
+      .stat-label { color:var(--muted); }
+      .stat-val { font-weight:700; color:var(--text); text-align:right; max-width:65%; line-height:1.4; }
+      @keyframes fadeIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+    </style>
+  </head>
+  <body class="theme-calc">
+    <!-- TAB 1: CALC -->
+    <div id="tab-calc" class="tab-pane active">
+      <div class="header">
+      <div class="header-icon">⚡</div>
+      <h1>EV Charge Calc</h1>
+      <p>Hitung tepat kWh & estimasi waktu pengisian — tanpa kira-kira</p>
+    </div>
+
+    <!-- SECTION 1: DATA KENDARAAN -->
+    <div class="section">
+      <div class="section-label">1. Data Kendaraan</div>
+
+      <div class="ev-picker-wrap">
+        <div class="ev-selected-display" id="evSelectedDisplay" onclick="toggleEvDropdown()">
+          <div>
+            <div class="ev-selected-name" id="evSelectedName">Memuat...</div>
+            <div class="ev-selected-kwh" id="evSelectedKwh"></div>
+          </div>
+          <div class="ev-selected-right">
+            <span class="ev-default-star" id="evDefaultStar" onclick="toggleDefaultEv(event)" title="Jadikan default">☆</span>
+            <span class="ev-selected-chevron" id="evChevron">▼</span>
+          </div>
+        </div>
+        <div class="ev-default-toast" id="evDefaultToast">✓ Disetel sebagai EV default kamu</div>
+        <div class="ev-dropdown" id="evDropdown">
+          <div style="position:sticky;top:0;z-index:2;background:var(--card);padding:10px 12px;border-bottom:1px solid var(--border);">
+            <div style="position:relative;">
+              <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:13px;color:var(--muted);pointer-events:none;">🔍</span>
+              <input type="text" id="evSearch" placeholder="Cari merek atau model..." style="width:100%;background:var(--input);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;padding:9px 12px 9px 34px;outline:none;transition:border-color 0.2s;" oninput="filterEvList()" onclick="event.stopPropagation()" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'" />
+            </div>
+          </div>
+          <div id="evListContainer"></div>
+        </div>
+      </div>
+
+      <div class="info-box" id="carInfoBox">
+        <h3>Spesifikasi Baterai</h3>
+        <p><span class="lbl">Kapasitas:</span><b id="lblKwh" style="color:#fff"></b> kWh</p>
+        <p><span class="lbl">Kimia:</span><span id="lblChem"></span></p>
+        <p><span class="lbl">Ketahanan Sel:</span><span id="lblCycle"></span></p>
+        <p style="margin-top:6px; padding-top:6px; border-top:1px dashed var(--border)"><span class="lbl">Karakteristik:</span><span id="lblChar"></span></p>
+      </div>
+    </div>
+
+    <!-- SECTION 2: PARAMETER PENGISIAN -->
+    <div class="section">
+      <div class="section-label">2. Parameter Pengisian</div>
+
+      <!-- MODE TOGGLE -->
+      <div class="field">
+        <label>Lokasi Pengisian</label>
+        <div class="charger-mode-toggle">
+          <button class="charger-mode-btn active" id="modeSpklu" onclick="setMode('spklu')">
+            <span class="charger-mode-icon">🏢</span>SPKLU
+          </button>
+          <button class="charger-mode-btn" id="modeRumah" onclick="setMode('rumah')">
+            <span class="charger-mode-icon">🏠</span>Charge di Rumah
+          </button>
+        </div>
+      </div>
+
+      <!-- PANEL SPKLU -->
+      <div id="panelSpklu" class="panel active">
+        <div class="field">
+          <label>Pilih Tipe SPKLU</label>
+          <div class="charger-grid">
+            <div class="charger-card active" id="btn-AC22" onclick="setCharger('AC22')">
+              <span class="charger-icon">🔌</span><span class="charger-name">AC 22 kW</span><span class="charger-sub">Slow / Medium</span>
+            </div>
+            <div class="charger-card" id="btn-DC22" onclick="setCharger('DC22')">
+              <span class="charger-icon">⚡</span><span class="charger-name">DC 22 kW</span><span class="charger-sub">Fast Charging</span>
+            </div>
+            <div class="charger-card" id="btn-DC50" onclick="setCharger('DC50')">
+              <span class="charger-icon">🚀</span><span class="charger-name">DC 50 kW</span><span class="charger-sub">Fast Charging</span>
+            </div>
+            <div class="charger-card" id="btn-DCUltra" onclick="setCharger('DCUltra')">
+              <span class="charger-icon">🔥</span><span class="charger-name">DC &gt;50 kW</span><span class="charger-sub">Ultra Fast</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PANEL RUMAH -->
+      <div id="panelRumah" class="panel">
+        <div class="field">
+          <label>Pilih Tipe Charger Rumah</label>
+          <div class="charger-grid">
+            <div class="charger-card" id="btn-Portable" onclick="setCharger('Portable')">
+              <span class="charger-icon">🔋</span><span class="charger-name">Portable</span><span class="charger-sub">~1.3–2.2 kW</span>
+            </div>
+            <div class="charger-card" id="btn-WallCharger" onclick="setCharger('WallCharger')">
+              <span class="charger-icon">🏠</span><span class="charger-name">Wall Charger</span><span class="charger-sub">7 kW (AC)</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- EXTRA TOGGLES (AC, SUN, NIGHT) -->
+      <div class="extra-toggles-box" id="extraTogglesBox">
+        <div class="extra-toggles-title">Opsi Kondisi Lapangan</div>
+        
+        <!-- Toggle Night (Only for Wall Charger) -->
+        <div class="toggle-wrap highlight" id="nightToggleWrap" style="display:none;">
+          <div>
+            <div class="toggle-label">🌙 Pengisian Malam Hari</div>
+            <div class="toggle-sub">Pukul 22.00–05.00 WIB (Diskon 30%)</div>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" id="nightModeToggle" onchange="updateCalc()">
+            <span class="toggle-slider yellow"></span>
+          </label>
+        </div>
+
+        <!-- Toggle AC Kabin -->
+        <div class="toggle-wrap">
+          <div>
+            <div class="toggle-label">❄️ AC Kabin Menyala</div>
+            <div class="toggle-sub">Sambil menunggu di dalam mobil (+2% loss)</div>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" id="toggleAC" onchange="updateCalc()">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+
+        <!-- Toggle Cuaca Terik -->
+        <div class="toggle-wrap">
+          <div>
+            <div class="toggle-label">☀️ Cuaca Terik / Jemur</div>
+            <div class="toggle-sub">Sistem pendingin baterai aktif (+1.5% loss)</div>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" id="toggleSun" onchange="updateCalc()">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+      </div>
+
+      <!-- INFO BOX LOSS (Dynamic) -->
+      <div class="info-box" id="lossInfoBox" style="background:rgba(255,255,255,0.03);border-color:var(--border);"></div>
+
+      <!-- INPUT SOC (Sliders) -->
+      <div class="field">
+        <div class="range-header">
+          <label>SOC Saat Ini (Awal)</label>
+          <div class="range-val-disp"><input type="number" id="valCur" value="20" min="0" max="100" oninput="syncInput('Cur'); updateCalc()"><span class="unit">%</span></div>
+        </div>
+        <input type="range" id="socCur" min="0" max="100" value="20" oninput="syncSlider('Cur'); updateCalc()">
+      </div>
+      
+      <div class="field">
+        <div class="range-header">
+          <label>Target SOC (Akhir)</label>
+          <div class="range-val-disp"><input type="number" id="valTgt" value="100" min="0" max="100" style="color:var(--accent);" oninput="syncInput('Tgt'); updateCalc()"><span class="unit">%</span></div>
+        </div>
+        <input type="range" id="socTgt" min="0" max="100" value="100" oninput="syncSlider('Tgt'); updateCalc()">
+      </div>
+
+      <!-- DC 100% WARNING -->
+      <div class="warning-banner" id="dcFullWarning">
+        <span class="warning-icon">⛔</span>
+        <div>
+          <div class="warning-title">Target >80% tidak disarankan untuk DC</div>
+          <div class="warning-body">
+            Pengisian DC di atas 80% memperlambat arus secara drastis untuk melindungi sel baterai dari kerusakan termal. Sangat disarankan berhenti di <b>80%</b> demi efisiensi waktu dan keawetan sel.
+          </div>
+        </div>
+      </div>
+
+      <!-- BATTERY VIZ -->
+      <div class="batt-viz" id="battViz">
+        <div class="batt-container">
+          <div class="batt-body">
+            <div class="batt-fill" id="battFill"></div>
+            <div class="batt-need" id="battNeed"></div>
+            <div class="batt-slow-zone" id="battSlowZone"></div>
+          </div>
+          <div class="batt-cap"></div>
+        </div>
+        <div class="batt-labels">
+          <span>Awal: <b id="vizCur" style="color:var(--green)">20%</b></span>
+          <span style="font-size:10px;color:rgba(255,149,0,0.6);">⚠ lambat 80%+</span>
+          <span>Target: <b id="vizTgt" style="color:var(--accent)">80%</b></span>
+        </div>
+      </div>
+
+      <div class="info-box golden-rule" id="ruleBox"></div>
+    </div>
+
+    <!-- SECTION 3: HASIL -->
+    <div class="section">
+      <div class="section-label">3. Hasil &amp; Estimasi Biaya</div>
+
+      <div class="kwh-highlight-box" id="kwhHighlightBox">
+        <div class="kwh-title" id="kwhBoxTitle">⚡ JUMLAH KWH YANG HARUS DIBELI</div>
+        <div class="kwh-value" id="kwhMainValue">0.00 <span style="font-size:16px">kWh</span></div>
+        <div class="kwh-rounded" id="kwhMainRounded">Saran input di PLN Mobile: <b>0 kWh</b></div>
+      </div>
+
+      <div class="duration-box" id="durationBox">
+        <div class="duration-top">
+          <div class="duration-icon">⏱️</div>
+          <div class="duration-content">
+            <div class="duration-title">Estimasi Durasi Pengisian</div>
+            <div class="duration-value" id="durationValue">—</div>
+            <div class="duration-sub" id="durationSub">Masukkan data SOC untuk estimasi waktu</div>
+          </div>
+          <div class="duration-badge" id="durationBadge">—</div>
+        </div>
+        <div class="slow-zone-note" id="slowZoneNote"></div>
+      </div>
+    </div>
+
+    <!-- RECEIPT -->
+    <div class="receipt-container" id="receiptArea">
+      <div class="receipt-title">Rincian Biaya (Referensi)</div>
+      <div class="receipt-row">
+        <span id="tariffLabel">Tarif Dasar SPKLU</span>
+        <span id="tariffRate">Rp 2.466,78 / kWh</span>
+      </div>
+      <div class="receipt-row" id="rowNightDiscount" style="display:none;">
+        <span>Diskon Malam PLN (30%)</span>
+        <span id="resDiscount" style="color:#27ae60;">— Rp 0</span>
+      </div>
+      <div class="receipt-row">
+        <span>Biaya Listrik murni</span>
+        <span id="resListrik">Rp 0</span>
+      </div>
+      <div class="receipt-row" id="rowPbjt">
+        <span id="rowPbjtLabel">PBJT-TL (3%)*</span>
+        <span id="resPbjt">Rp 0</span>
+      </div>
+      <div class="receipt-row" id="rowAdmin">
+        <span>Biaya Admin Payment Channel</span>
+        <span>Rp 1.750</span>
+      </div>
+      <div class="receipt-row bold">
+        <span>Estimasi Total Bayar</span>
+        <span id="resTotal">Rp 0</span>
+      </div>
+      <div class="receipt-night-badge" id="nightBadge">🌙 Tarif Malam PLN diterapkan · Hemat 30%</div>
+      <div class="kwh-info" id="kwhNote">Daya bersih masuk: 0 kWh | Total listrik tercatat: 0 kWh</div>
+      <div id="pbjtNote" style="text-align:center;font-size:10px;color:#999;margin-top:8px;display:none;">
+        *Tarif referensi Jakarta. Persentase pajak jalan dapat berbeda mengikuti regulasi Pemda setempat.
+      </div>
+<button class="btn-secondary" onclick="prepLogFromCalc()">📝 Simpan Hasil Ini ke Log</button>
+    </div>
+    </div> <!-- PENUTUP TAB CALC -->
+
+    <!-- TAB 2: LOG -->
+    <div id="tab-log" class="tab-pane">
+      <div class="header"><div class="header-icon">📓</div><h1>Charging Log</h1><p>Catatan riwayat pengecasanmu</p></div>
+      <div class="section">
+        
+        <!-- Form Pengisian Log -->
+        <div class="log-form" id="logFormArea">
+          <div class="section-label" style="margin-bottom:12px;">Input Data Pengecasan</div>
+          <input type="hidden" id="logId">
+          <div class="log-row">
+            <div class="log-col"><label>Tanggal</label><input type="date" id="logDate"></div>
+            <div class="log-col"><label>Odometer (Km)</label><input type="number" id="logOdo" placeholder="Opsional..."></div>
+          </div>
+          <div class="log-row">
+            <div class="log-col"><label>SOC Awal (%)</label><input type="number" id="logSocCur" placeholder="Cth: 20"></div>
+            <div class="log-col"><label>SOC Akhir (%)</label><input type="number" id="logSocTgt" placeholder="Cth: 80"></div>
+          </div>
+          <div class="log-row">
+            <div class="log-col"><label>Total Biaya (Rp)</label><input type="number" id="logCost" placeholder="Wajib diisi"></div>
+            <div class="log-col"><label>Energi (kWh)</label><input type="number" step="0.01" id="logKwh" placeholder="Opsional..."></div>
+          </div>
+          <div class="log-row">
+            <div class="log-col"><label>Lokasi / Catatan</label><input type="text" id="logNote" placeholder="Cth: SPKLU Rest Area KM 57"></div>
+          </div>
+          <div style="display:flex; gap:10px;">
+             <button class="btn-primary" style="background:var(--border); color:var(--text);" onclick="closeLogForm()">Batal</button>
+             <button class="btn-primary" onclick="saveLogData()">💾 Simpan Data</button>
+          </div>
+        </div>
+        
+        <!-- Header Daftar Log -->
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+          <div class="section-label" style="margin-bottom:0;">Riwayat (Terbaru)</div>
+          <button style="background:none; border:none; color:var(--accent); font-weight:800; font-size:12px; cursor:pointer; background:rgba(0,212,255,0.1); padding:4px 10px; border-radius:6px;" onclick="openLogForm()">+ Manual</button>
+        </div>
+        
+        <!-- Tempat List Log Muncul -->
+        <div id="logListArea"></div>
+      </div>
+    </div>
+
+    <!-- TAB 3: ANALYSIS -->
+    <div id="tab-analysis" class="tab-pane">
+      <div class="header"><div class="header-icon">📊</div><h1>Dashboard Analitik</h1><p>Efisiensi operasional bulan berjalan</p></div>
+      <div class="section">
+        
+        <div class="info-box" style="text-align:center; border-color:var(--border); background:var(--input);">
+           <h3 style="font-size:13px; color:var(--text); margin-bottom:4px;">Periode: <b id="anaMonth" style="color:var(--accent)">Memuat...</b></h3>
+           <p style="font-size:11px; color:var(--muted);">Berdasarkan data yang memiliki Odometer.</p>
+        </div>
+        
+        <div class="charger-grid">
+           <div class="charger-card" style="cursor:default; border-color:transparent;">
+             <span class="charger-icon" style="font-size:18px;">🛣️</span>
+             <span class="charger-name" id="anaTotalDist" style="font-size:16px;">0 km</span>
+             <span class="charger-sub">Jarak Ditempuh</span>
+           </div>
+           <div class="charger-card" style="cursor:default; border-color:transparent;">
+             <span class="charger-icon" style="font-size:18px;">⚡</span>
+             <span class="charger-name" id="anaTotalKwh" style="font-size:16px;">0 kWh</span>
+             <span class="charger-sub">Energi Diserap</span>
+           </div>
+        </div>
+
+        <div class="kwh-highlight-box" style="margin-top:16px; text-align:left; padding:16px;">
+           <div class="kwh-title" style="text-align:center; margin-bottom:12px; color:var(--text);">💡 BIAYA EV BULAN INI</div>
+           <div style="text-align:center; font-size:26px; font-weight:800; color:var(--green); margin-bottom:16px;" id="anaTotalCost">Rp 0</div>
+           
+           <div style="background:rgba(0,0,0,0.3); padding:12px; border-radius:8px; border:1px solid rgba(255,255,255,0.05);">
+             <div style="font-size:11px; font-weight:700; color:var(--yellow); text-transform:uppercase; margin-bottom:6px;">⛽ Komparasi Mobil Bensin (ICE)</div>
+             <div style="font-size:12px; color:var(--muted); line-height:1.5;" id="anaBbmContent">
+                Tambahkan minimal 2 data Log di bulan yang sama dengan input Odometer untuk melihat perbandingan penghematan bahan bakar.
+             </div>
+           </div>
+        </div>
+      </div>
+    </div>
+
+<!-- MODAL ANALYSIS -->
+    <div class="modal-overlay" id="anaModal" onclick="closeAnaModal(event)">
+       <div class="modal-content" onclick="event.stopPropagation()">
+          <div class="modal-close" onclick="document.getElementById('anaModal').classList.remove('show')">✕</div>
+          <h2 id="modalTitle" style="font-size:16px; margin-bottom:16px; color:var(--accent);">Analisis</h2>
+          <div id="modalBody"></div>
+       </div>
+    </div>
+
+    <!-- BOTTOM NAV BAR -->
+    <div class="bottom-nav">
+      <div class="nav-item active" id="nav-calc" onclick="switchTab('calc')">
+        <span class="nav-icon">⚡</span>
+        <span>Calc</span>
+      </div>
+      <div class="nav-item" id="nav-log" onclick="switchTab('log')">
+        <span class="nav-icon">📓</span>
+        <span>Log</span>
+      </div>
+      <div class="nav-item" id="nav-analysis" onclick="switchTab('analysis')">
+        <span class="nav-icon">📊</span>
+        <span>Analysis</span>
+      </div>
+    </div>
+    <script>
+// ============== TAB NAVIGATION ==============
+      function switchTab(tabName) {
+        // 1. Sembunyikan semua tab & hilangkan status active di navigasi
+        ['calc', 'log', 'analysis'].forEach(t => {
+          document.getElementById('tab-' + t).classList.remove('active');
+          document.getElementById('nav-' + t).classList.remove('active');
+        });
+        
+        // 2. Tampilkan tab yang dipilih
+        document.getElementById('tab-' + tabName).classList.add('active');
+        document.getElementById('nav-' + tabName).classList.add('active');
+        
+        // 3. Ganti warna background body
+        document.body.className = 'theme-' + tabName;
+        
+        // (Opsional nanti) Panggil fungsi render Log/Analysis saat tab dibuka
+        // if (tabName === 'log') renderLogs();
+        // if (tabName === 'analysis') renderAnalysis();
+      }
+      const TXT_LFP = {
+        chem: "Lithium Iron Phosphate (LFP)",
+        cycle: "Sangat tinggi (Estimasi >3.000 siklus pengisian penuh sebelum degradasi wajar).",
+        char: "Sangat aman (anti-thermal runaway). Kurva voltase sangat datar di area tengah sehingga komputer mobil (BMS) butuh kalibrasi 100% berkala agar persentase dashboard akurat."
+      };
+      const TXT_NMC = {
+        chem: "Nickel Manganese Cobalt (NMC/Ternary)",
+        cycle: "Tinggi (Estimasi 1.000 - 1.500 siklus pengisian penuh sebelum degradasi wajar).",
+        char: "Kepadatan energi tinggi (jarak tempuh jauh). Sensitif suhu ekstrem, disarankan dibatasi hingga 80-90% untuk pengisian harian demi keawetan jangka panjang."
+      };
+
+      const EV_DB = [
+        {brand:"Aion", model:"V Exclusive", kwh:64.5, type:"LFP"},
+        {brand:"Aion", model:"V Luxury", kwh:75.3, type:"LFP"},
+        {brand:"Aion", model:"Y Plus Exclusive", kwh:50.66, type:"LFP"},
+        {brand:"Aion", model:"Y Plus Premium", kwh:63.2, type:"LFP"},
+        {brand:"Aion", model:"UT", kwh:60, type:"LFP"},
+        {brand:"Aion", model:"Hyptec HT", kwh:83, type:"LFP"},
+        {brand:"Aletra", model:"L8 Short Range", kwh:50.4, type:"LFP"},
+        {brand:"Aletra", model:"L8 Long Range", kwh:64.74, type:"LFP"},
+        {brand:"Audi", model:"Q8 50 e-tron", kwh:89, type:"NMC"},
+        {brand:"Audi", model:"Q8 55 e-tron", kwh:106, type:"NMC"},
+        {brand:"BMW", model:"iX xDrive40 Sport", kwh:76.6, type:"NMC"},
+        {brand:"BMW", model:"iX xDrive45", kwh:94.8, type:"NMC"},
+        {brand:"BMW", model:"iX xDrive50 Sport", kwh:108.8, type:"NMC"},
+        {brand:"BMW", model:"i4 eDrive35", kwh:70.2, type:"NMC"},
+        {brand:"BMW", model:"i4 eDrive40", kwh:83.9, type:"NMC"},
+        {brand:"BMW", model:"i5 eDrive 40 M Sport", kwh:81.2, type:"NMC"},
+        {brand:"BMW", model:"i5 M60 xDrive", kwh:83.9, type:"NMC"},
+        {brand:"BMW", model:"i5 Touring", kwh:81.2, type:"NMC"},
+        {brand:"BMW", model:"i7 xDrive60 Gran Lusso", kwh:101.7, type:"NMC"},
+        {brand:"BYD", model:"Atto 1 Dynamic", kwh:30.08, type:"LFP"},
+        {brand:"BYD", model:"Atto 1 Premium", kwh:38.88, type:"LFP"},
+        {brand:"BYD", model:"M6 Superior", kwh:71.8, type:"LFP"},
+        {brand:"BYD", model:"M6 Standard", kwh:55.4, type:"LFP"},
+        {brand:"BYD", model:"Sealion 7", kwh:82.56, type:"LFP"},
+        {brand:"BYD", model:"Atto 3 Advance", kwh:49.92, type:"LFP"},
+        {brand:"BYD", model:"Atto 3 Superior", kwh:60.48, type:"LFP"},
+        {brand:"BYD", model:"Seal Dynamic", kwh:61.44, type:"LFP"},
+        {brand:"BYD", model:"Seal Premium", kwh:82.56, type:"LFP"},
+        {brand:"BYD", model:"Dolphin Dynamic", kwh:44.9, type:"LFP"},
+        {brand:"BYD", model:"Dolphin Premium", kwh:60.48, type:"LFP"},
+        {brand:"Changan", model:"Lumin", kwh:28.08, type:"LFP"},
+        {brand:"Changan", model:"Deepal S07", kwh:79.97, type:"NMC"},
+        {brand:"Chery", model:"J6 RWD", kwh:65.69, type:"LFP"},
+        {brand:"Chery", model:"J6 iWD", kwh:69.77, type:"LFP"},
+        {brand:"Chery", model:"J6T RWD", kwh:65.69, type:"LFP"},
+        {brand:"Chery", model:"J6T iWD", kwh:69.77, type:"LFP"},
+        {brand:"Chery", model:"Omoda E5", kwh:61, type:"LFP"},
+        {brand:"Chery", model:"Omoda E5 Pure", kwh:61, type:"LFP"},
+        {brand:"Chery", model:"Q", kwh:42.7, type:"LFP"},
+        {brand:"Citroën", model:"e-C3", kwh:29.2, type:"LFP"},
+        {brand:"Denza", model:"D9", kwh:103.36, type:"LFP"},
+        {brand:"DFSK", model:"Seres E1 B-Type", kwh:13.8, type:"LFP"},
+        {brand:"DFSK", model:"Seres E1 L-Type", kwh:16.8, type:"LFP"},
+        {brand:"Geely", model:"EX5 Pro", kwh:60.22, type:"LFP"},
+        {brand:"Geely", model:"EX5 Max", kwh:60.22, type:"LFP"},
+        {brand:"Geely", model:"EX2", kwh:40.16, type:"LFP"},
+        {brand:"Honda", model:"e:N1", kwh:68.8, type:"NMC"},
+        {brand:"Hyundai", model:"Ioniq 5 Standard Range", kwh:58, type:"NMC"},
+        {brand:"Hyundai", model:"Ioniq 5 Long Range", kwh:72.6, type:"NMC"},
+        {brand:"Hyundai", model:"Ioniq 6", kwh:77.4, type:"NMC"},
+        {brand:"Hyundai", model:"Ioniq 5 N", kwh:84, type:"NMC"},
+        {brand:"Hyundai", model:"Kona Electric Standard", kwh:48.9, type:"NMC"},
+        {brand:"Hyundai", model:"Kona Electric N Line", kwh:66, type:"NMC"},
+        {brand:"iCar", model:"V23 2WD", kwh:60, type:"LFP"},
+        {brand:"iCar", model:"V23 iWD", kwh:81.76, type:"LFP"},
+        {brand:"Jaecoo", model:"J5", kwh:60.9, type:"LFP"},
+        {brand:"Kia", model:"EV6 GT-Line", kwh:77.4, type:"NMC"},
+        {brand:"Kia", model:"Niro EV", kwh:64.8, type:"NMC"},
+        {brand:"Leapmotor", model:"B10", kwh:67.1, type:"LFP"},
+        {brand:"Lexus", model:"UX 300e", kwh:72.8, type:"NMC"},
+        {brand:"Maxus", model:"Mifa 7", kwh:90, type:"NMC"},
+        {brand:"Maxus", model:"Mifa 9", kwh:90, type:"NMC"},
+        {brand:"Mazda", model:"MX-30", kwh:35.5, type:"NMC"},
+        {brand:"Mercedes", model:"EQS 450+", kwh:107.8, type:"NMC"},
+        {brand:"Mercedes", model:"EQE 350", kwh:90.6, type:"NMC"},
+        {brand:"MG", model:"S5 EV Ignite/Magnify", kwh:49, type:"LFP"},
+        {brand:"MG", model:"S5 EV Magnify Max", kwh:62, type:"LFP"},
+        {brand:"MG", model:"MG4 EV Magnify", kwh:51, type:"LFP"},
+        {brand:"MG", model:"MG4 EV Magnify Max", kwh:64, type:"LFP"},
+        {brand:"MG", model:"ZS EV", kwh:50.3, type:"LFP"},
+        {brand:"Mini", model:"Cooper SE", kwh:54.2, type:"NMC"},
+        {brand:"Mini", model:"JCW E", kwh:49.2, type:"NMC"},
+        {brand:"Nissan", model:"Leaf", kwh:40, type:"NMC"},
+        {brand:"Polytron", model:"G3", kwh:51.9, type:"LFP"},
+        {brand:"Porsche", model:"Taycan 4S standar", kwh:79.2, type:"NMC"},
+        {brand:"Porsche", model:"Taycan 4S Plus", kwh:105, type:"NMC"},
+        {brand:"Porsche", model:"Taycan 4 Cross Turismo", kwh:93.4, type:"NMC"},
+        {brand:"Suzuki", model:"e Vitara Standard", kwh:49, type:"LFP"},
+        {brand:"Suzuki", model:"e Vitara Long Range", kwh:61, type:"LFP"},
+        {brand:"Tesla", model:"Model 3 Standard", kwh:57.5, type:"LFP"},
+        {brand:"Tesla", model:"Model 3 Long Range", kwh:82, type:"NMC"},
+        {brand:"Tesla", model:"Model Y Standard", kwh:75, type:"LFP"},
+        {brand:"Tesla", model:"Model Y Long Range", kwh:82, type:"NMC"},
+        {brand:"Tesla", model:"Model S", kwh:100, type:"NMC"},
+        {brand:"Tesla", model:"Model X", kwh:100, type:"NMC"},
+        {brand:"Toyota", model:"bZ4X", kwh:73.11, type:"NMC"},
+        {brand:"VinFast", model:"VF e34", kwh:41.9, type:"LFP"},
+        {brand:"VinFast", model:"VF 5", kwh:29.6, type:"LFP"},
+        {brand:"VinFast", model:"VF 3", kwh:18.6, type:"LFP"},
+        {brand:"VinFast", model:"VF 6", kwh:59.6, type:"LFP"},
+        {brand:"VinFast", model:"VF 7 Plus", kwh:75.3, type:"LFP"},
+        {brand:"VinFast", model:"VF 7 Eco", kwh:59.6, type:"LFP"},
+        {brand:"Volvo", model:"EX30", kwh:49, type:"NMC"},
+        {brand:"Volvo", model:"EX40", kwh:82, type:"NMC"},
+        {brand:"Volvo", model:"EC40 Recharge", kwh:82, type:"NMC"},
+        {brand:"Volvo", model:"C40 Recharge", kwh:78, type:"NMC"},
+        {brand:"Wuling", model:"BinguoEV Lite", kwh:31.9, type:"LFP"},
+        {brand:"Wuling", model:"BinguoEV Pro", kwh:31.9, type:"LFP"},
+        {brand:"Wuling", model:"Air ev Lite Standard", kwh:17.3, type:"LFP"},
+        {brand:"Wuling", model:"Air ev Lite Long Range", kwh:26.7, type:"LFP"},
+        {brand:"Wuling", model:"Air ev Pro Long Range", kwh:26.7, type:"LFP"},
+        {brand:"Wuling", model:"Cloud EV", kwh:50.6, type:"LFP"},
+        {brand:"Wuling", model:"Darion EV", kwh:69.2, type:"LFP"},
+        {brand:"Wuling", model:"Eksion EV", kwh:69.2, type:"LFP"},
+        {brand:"Zeekr", model:"X", kwh:66, type:"NMC"},
+        {brand:"Zeekr", model:"009 Varian 116 kWh", kwh:116, type:"NMC"},
+        {brand:"Zeekr", model:"009 Varian 140 kWh", kwh:140, type:"NMC"},
+        {brand:"GWM", model:"Ora 03", kwh:47.8, type:"LFP"}
+      ];
+
+      // ============== CONSTANTS ==============
+      const PRICE_SPKLU     = 2466.78;
+      const ADMIN_FEE       = 1750;
+      const PRICE_HOME      = 1699.53;
+      const NIGHT_DISCOUNT  = 0.30;
+
+      // menit/kWh — SPKLU (0–80% normal zone)
+      const CHARGE_RATE_SPKLU = { AC22: 5.61, DC22: 1.235*(50/22), DC50: 1.235, DCUltra: 1.235*0.75 };
+      // menit/kWh — Home
+      const CHARGE_RATE_HOME = { WallCharger: 9.63, Portable: 39.2 };
+
+      // Perlambatan drastis di area 80-100%
+      const SLOW_FACTOR = { AC22: 1.5, DC22: 2.8, DC50: 2.8, DCUltra: 2.8, WallCharger: 1.5, Portable: 1.5 };
+
+      // Efisiensi Dasar (Base Loss) -> Diperbarui lebih moderat (DC dari 1.04 jadi 1.07)
+      const BASE_LOSS_MULT = { AC22: 1.11, DC22: 1.07, DC50: 1.07, DCUltra: 1.07, WallCharger: 1.10, Portable: 1.12 };
+
+      const CHARGER_LABEL = {
+        AC22:'AC 22 kW (SPKLU)', DC22:'DC 22 kW (SPKLU)', DC50:'DC 50 kW (SPKLU)',
+        DCUltra:'DC >50 kW (SPKLU)', WallCharger:'Wall Charger 7 kW', Portable:'Portable Charger'
+      };
+
+      // ============== STATE ==============
+      let currentKwh   = 60.9;
+      let curCharger   = 'AC22';
+      let curMode      = 'spklu';
+      let selectedEvIdx = -1;
+      let dropdownOpen = false;
+
+      // ============== SLIDER SYNC ==============
+function syncSlider(idStr) {
+  const val = document.getElementById('soc' + idStr).value;
+  document.getElementById('val' + idStr).value = val;
+}
+function setSliderValue(idStr, val) {
+  document.getElementById('soc' + idStr).value = val;
+  document.getElementById('val' + idStr).value = val;
+}
+function syncInput(idStr) {
+  let inputEl = document.getElementById('val' + idStr);
+  let val = parseInt(inputEl.value);
+  // Batasi input agar tidak lebih dari 100 atau kurang dari 0
+  if (isNaN(val)) val = 0;
+  if (val > 100) { val = 100; inputEl.value = 100; }
+  if (val < 0) { val = 0; inputEl.value = 0; }
+  document.getElementById('soc' + idStr).value = val;
+}
+
+      // ============== EV PICKER ==============
+      function buildEvList(filter='') {
+        EV_DB.sort((a,b) => a.brand.localeCompare(b.brand) || a.model.localeCompare(b.model));
+        const q = filter.toLowerCase().trim();
+        const container = document.getElementById('evListContainer');
+        let html = ''; let lastBrand = ''; let count = 0;
+        EV_DB.forEach((ev, idx) => {
+          const full = (ev.brand + ' ' + ev.model).toLowerCase();
+          if (q && !full.includes(q)) return;
+          if (ev.brand !== lastBrand) {
+            html += `<div class="ev-group-label">${ev.brand}</div>`; lastBrand = ev.brand;
+          }
+          const sel = idx === selectedEvIdx ? 'selected' : '';
+          html += `<div class="ev-option ${sel}" onclick="selectEv(${idx})">
+            <span>${ev.model} <span class="ev-option-kwh">${ev.kwh} kWh</span></span>
+            <span class="ev-option-type ${ev.type}">${ev.type}</span>
+          </div>`;
+          count++;
+        });
+        if (count === 0) html = `<div class="ev-no-result">Tidak ditemukan 🔍</div>`;
+        container.innerHTML = html;
+      }
+
+      function filterEvList() { buildEvList(document.getElementById('evSearch').value); }
+
+      function toggleEvDropdown() {
+        dropdownOpen = !dropdownOpen;
+        document.getElementById('evDropdown').classList.toggle('open', dropdownOpen);
+        document.getElementById('evChevron').textContent = dropdownOpen ? '▲' : '▼';
+        if (dropdownOpen) {
+          document.getElementById('evSearch').value = ''; buildEvList('');
+          setTimeout(() => document.getElementById('evSearch').focus(), 150);
+          setTimeout(() => {
+            const sel = document.querySelector('.ev-option.selected');
+            if (sel) sel.scrollIntoView({block:'nearest'});
+          }, 200);
+        }
+      }
+
+      function selectEv(idx) {
+        selectedEvIdx = idx;
+        const ev = EV_DB[idx];
+        currentKwh = ev.kwh;
+        document.getElementById('evSelectedName').textContent = ev.brand + ' ' + ev.model;
+        document.getElementById('evSelectedKwh').textContent = ev.kwh + ' kWh · ' + ev.type;
+        document.getElementById('lblKwh').textContent = ev.kwh;
+        const t = ev.type === 'LFP' ? TXT_LFP : TXT_NMC;
+        document.getElementById('lblChem').textContent = t.chem;
+        document.getElementById('lblCycle').textContent = t.cycle;
+        document.getElementById('lblChar').textContent = t.char;
+        
+        dropdownOpen = false;
+        document.getElementById('evDropdown').classList.remove('open');
+        document.getElementById('evChevron').textContent = '▼';
+        updateDefaultStar(); updateCalc();
+        if(typeof renderLogs === 'function') { renderLogs(); renderAnalysis(); }
+      }
+
+      // ============== DEFAULT EV ==============
+      const DEFAULT_EV_KEY = 'evChargeCalc_defaultEv';
+      function getSavedDefaultEv() {
+        try { const raw = localStorage.getItem(DEFAULT_EV_KEY); return raw ? JSON.parse(raw) : null; }
+        catch (e) { return null; }
+      }
+      function isCurrentEvTheDefault() {
+        const saved = getSavedDefaultEv();
+        if (!saved || selectedEvIdx < 0) return false;
+        const ev = EV_DB[selectedEvIdx];
+        return saved.brand === ev.brand && saved.model === ev.model;
+      }
+      function updateDefaultStar() {
+        const starEl = document.getElementById('evDefaultStar');
+        const isDef = isCurrentEvTheDefault();
+        starEl.textContent = isDef ? '★' : '☆';
+        starEl.classList.toggle('is-default', isDef);
+      }
+      function toggleDefaultEv(event) {
+        event.stopPropagation();
+        if (selectedEvIdx < 0) return;
+        if (isCurrentEvTheDefault()) {
+          localStorage.removeItem(DEFAULT_EV_KEY); updateDefaultStar(); return;
+        }
+        localStorage.setItem(DEFAULT_EV_KEY, JSON.stringify({brand: EV_DB[selectedEvIdx].brand, model: EV_DB[selectedEvIdx].model}));
+        updateDefaultStar();
+        const toastEl = document.getElementById('evDefaultToast');
+        toastEl.classList.add('show');
+        clearTimeout(window._evToastTimer);
+        window._evToastTimer = setTimeout(() => toastEl.classList.remove('show'), 2200);
+      }
+      document.addEventListener('click', e => {
+        const wrap = document.getElementById('evSelectedDisplay').parentElement;
+        if (!wrap.contains(e.target) && dropdownOpen) { toggleEvDropdown(); }
+      });
+
+      // ============== MODE & CHARGER ==============
+      function setMode(mode) {
+        curMode = mode;
+        document.getElementById('modeSpklu').classList.toggle('active', mode==='spklu');
+        document.getElementById('modeRumah').classList.toggle('active', mode==='rumah');
+        document.getElementById('panelSpklu').classList.toggle('active', mode==='spklu');
+        document.getElementById('panelRumah').classList.toggle('active', mode==='rumah');
+        
+        if (mode === 'spklu') { setCharger('AC22'); } 
+        else { setCharger('WallCharger'); }
+      }
+
+      function setCharger(type) {
+        curCharger = type;
+        const isAC = ['AC22', 'WallCharger', 'Portable'].includes(type);
+        
+        if (curMode === 'spklu') {
+          ['AC22','DC22','DC50','DCUltra'].forEach(t => document.getElementById('btn-'+t).classList.toggle('active', t===type));
+        } else {
+          ['Portable','WallCharger'].forEach(t => document.getElementById('btn-'+t).classList.toggle('active', t===type));
+          document.getElementById('nightToggleWrap').style.display = type === 'WallCharger' ? 'flex' : 'none';
+          if (type === 'Portable') document.getElementById('nightModeToggle').checked = false;
+        }
+
+        // Logic Auto Target SOC
+        if (isAC) {
+          setSliderValue('Tgt', 100);
+        } else {
+          setSliderValue('Tgt', 80);
+        }
+        updateCalc();
+      }
+
+      // ============== UTILS ==============
+      function formatRp(val) { return 'Rp ' + Math.round(val).toLocaleString('id-ID'); }
+      function formatDuration(totalMinutes) {
+        if (totalMinutes <= 0) return '—';
+        const hours = Math.floor(totalMinutes / 60);
+        const minutes = Math.round(totalMinutes % 60);
+        if (hours === 0) return `${minutes} menit`;
+        if (minutes === 0) return `${hours} jam`;
+        return `${hours} jam ${minutes} menit`;
+      }
+
+      // ============== MAIN CALC ==============
+      function updateCalc() {
+        let cur = parseInt(document.getElementById('socCur').value) || 0;
+        let tgt = parseInt(document.getElementById('socTgt').value) || 0;
+        const ev = EV_DB[selectedEvIdx] || EV_DB[0];
+
+        // Extra Toggles
+        const acOn = document.getElementById('toggleAC').checked;
+        const sunOn = document.getElementById('toggleSun').checked;
+        let extraLossMult = 0;
+        if (acOn) extraLossMult += 0.02; // +2% loss
+        if (sunOn) extraLossMult += 0.015; // +1.5% loss
+// === MULAI INJEKSI MODUL 3 ===
+const toggleBox = document.getElementById('extraTogglesBox');
+if (toggleBox) {
+  toggleBox.classList.remove('theme-ice', 'theme-sand', 'theme-mixed');
+  if (acOn && sunOn) toggleBox.classList.add('theme-mixed');
+  else if (acOn) toggleBox.classList.add('theme-ice');
+  else if (sunOn) toggleBox.classList.add('theme-sand');
+}
+// === AKHIR INJEKSI MODUL 3 ===
+
+        // Visual Slider Bar
+        const fillEl = document.getElementById('battFill');
+        const needEl = document.getElementById('battNeed');
+        const needed = Math.max(tgt - cur, 0);
+        fillEl.style.width = cur + '%';
+        fillEl.style.background = cur<20 ? '#FF4560' : cur<50 ? '#FFD166' : '#00E5A0';
+        needEl.style.left = cur + '%';
+        needEl.style.width = Math.min(needed, 100-cur) + '%';
+        document.getElementById('vizCur').textContent = cur + '%';
+        document.getElementById('vizCur').style.color = cur<20?'#FF4560':cur<50?'#FFD166':'#00E5A0';
+        document.getElementById('vizTgt').textContent = tgt + '%';
+
+        const isDC = ['DC22','DC50','DCUltra'].includes(curCharger);
+        const isAC = !isDC;
+        const isHome = curMode === 'rumah';
+
+        // Warning DC Full
+        document.getElementById('dcFullWarning').classList.toggle('show', isDC && tgt > 80);
+
+        // Calculate Multiplier
+        let finalMultiplier = BASE_LOSS_MULT[curCharger] + extraLossMult;
+        let lossPercent = Math.round((finalMultiplier - 1) * 100);
+
+        // Info Box Loss Update
+        let tmsText = (acOn || sunOn) ? `<br><b style="color:var(--orange)">Tambahan Beban Daya:</b> ${acOn?'AC Kabin / ':''}${sunOn?'Cuaca Panas / ':''}Sistem bekerja ekstra. Baterai menyedot daya langsung dari SPKLU sekitar ${(extraLossMult*100).toFixed(1)}% untuk operasional/menjaga suhu sel tetap stabil.` : '';
+        
+        let lossDesc = isHome 
+          ? `Parameter Loss (Rumah): Charger ${curCharger==='WallCharger'?'7 kW':'1.8 kW'}. Loss dasar ${(BASE_LOSS_MULT[curCharger]-1)*100}%.`
+          : (isAC ? `Parameter Loss SPKLU AC: Kerugian daya dasar akibat konverter (OBC) 11%.` 
+                  : `Parameter Loss SPKLU DC: Efisiensi tinggi (langsung bypass ke baterai). Loss dasar 7%.`);
+        
+        document.getElementById('lossInfoBox').innerHTML = `<p><b>Pengali Estimasi: ${finalMultiplier.toFixed(3)}</b> (Total Loss ${lossPercent}%)</p><p>${lossDesc}${tmsText}</p>`;
+
+        // Golden Rule Update
+        let ruleTitle = isHome ? `🏠 Golden Rule: Charge di Rumah` : (isAC ? `🌟 Golden Rule: SPKLU AC 22 kW` : `⚠️ Golden Rule: SPKLU DC (Fast)`);
+        let ruleBody = "";
+        
+        if (isAC) {
+          if (ev.type === 'LFP') {
+            ruleBody = `<p><b>Wajib 100% minimal seminggu sekali.</b> Proses Balancing/Kalibrasi BMS (komputer baterai) butuh arus kecil di top-level 90%-100% agar persentase dashboard tidak loncat. Ini hanya bisa difasilitasi optimal oleh charger tipe AC (Rumah/SPKLU 22kW).</p>`;
+          } else {
+            ruleBody = `<p>Arus AC sangat ramah untuk sel baterai NMC. <b>Sangat disarankan stop di 80-90% untuk pemakaian harian dalam kota</b> demi meminimalisir degradasi jangka panjang. Pengisian 100% boleh dilakukan jika bersiap road trip atau bepergian jauh.</p>`;
+          }
+          if(isHome && document.getElementById('nightModeToggle').checked && curCharger === 'WallCharger'){
+            ruleBody += `<p style="margin-top:6px; color:var(--yellow)">🌙 <b>Mode Malam aktif.</b> Manfaatkan diskon 30% dari PLN (22.00–05.00) untuk top-up harian yang murah meriah.</p>`;
+          }
+        } else {
+          ruleBody = `<p><b>Maksimal di-charge sampai 80% saja.</b> Arus DC memompa daya sangat agresif. Di atas 80%, kurva penerimaan baterai drop drastis untuk memproteksi suhu sel. Berhenti di 80% menghemat waktu antrean dan menjaga stabilitas struktur kimia ${ev.type}.</p>`;
+        }
+        
+        document.getElementById('ruleBox').innerHTML = `<h3>${ruleTitle}</h3>${ruleBody}`;
+
+        // Empty state check
+        if (tgt <= cur) {
+          document.getElementById('kwhMainValue').innerHTML = `0.00 <span style="font-size:16px">kWh</span>`;
+          document.getElementById('kwhMainRounded').innerHTML = `Target SOC harus lebih besar dari sisa kapasitas awal`;
+          document.getElementById('resListrik').textContent = 'Rp 0';
+          document.getElementById('resPbjt').textContent = 'Rp 0';
+          document.getElementById('resTotal').textContent = 'Rp 0';
+          document.getElementById('kwhNote').textContent = 'Perbaiki target persen pengisian Anda.';
+          document.getElementById('durationValue').textContent = '—';
+          document.getElementById('durationSub').textContent = 'Masukkan data SOC untuk estimasi waktu';
+          document.getElementById('durationBadge').textContent = '—';
+          document.getElementById('slowZoneNote').classList.remove('show');
+          return;
+        }
+
+        // --- kWh Calc ---
+        const netNeeded  = ((tgt - cur) / 100) * currentKwh;
+        const kwhBuy     = netNeeded * finalMultiplier;
+        const ceilKwh    = Math.ceil(kwhBuy);
+
+        // --- Duration ---
+        const rateNormal = isHome ? CHARGE_RATE_HOME[curCharger] : CHARGE_RATE_SPKLU[curCharger];
+        const slowFactor = SLOW_FACTOR[curCharger];
+
+        const p1Start = Math.min(cur, 80); const p1End = Math.min(tgt, 80);
+        const kwh1 = Math.max((p1End - p1Start), 0) / 100 * currentKwh;
+        const mins1 = kwh1 * rateNormal;
+
+        const p2Start = Math.max(cur, 80); const p2End = tgt;
+        const kwh2 = Math.max((p2End - p2Start), 0) / 100 * currentKwh;
+        const mins2 = kwh2 * rateNormal * slowFactor;
+
+        const totalMins = mins1 + mins2;
+        const hasSlowZone = tgt > 80 && kwh2 > 0;
+
+        // --- Cost ---
+        const nightOn = curMode==='rumah' && curCharger==='WallCharger' && document.getElementById('nightModeToggle').checked;
+        const baseRate = isHome ? PRICE_HOME : PRICE_SPKLU;
+        const effectiveRate = nightOn ? baseRate * (1 - NIGHT_DISCOUNT) : baseRate;
+        const biayaListrik = kwhBuy * effectiveRate;
+        const nightSaving = nightOn ? kwhBuy * PRICE_HOME * NIGHT_DISCOUNT : 0;
+
+        let total;
+        if (isHome) {
+          total = biayaListrik;
+          document.getElementById('rowPbjt').style.display = 'none';
+          document.getElementById('rowAdmin').style.display = 'none';
+          document.getElementById('pbjtNote').style.display = 'none';
+          document.getElementById('tariffLabel').textContent = 'Tarif Listrik Rumah (PLN)';
+          document.getElementById('tariffRate').textContent = `Rp ${effectiveRate.toFixed(2).replace('.',',')} / kWh`;
+          document.getElementById('kwhBoxTitle').textContent = '🏠 ESTIMASI ENERGI TERPAKAI';
+          document.getElementById('kwhMainRounded').innerHTML = `Daya baterai bersih: <b>${netNeeded.toFixed(2)} kWh</b>`;
+        } else {
+          const pbjt = biayaListrik * 0.03;
+          total = biayaListrik + pbjt + ADMIN_FEE;
+          document.getElementById('resPbjt').textContent = formatRp(pbjt);
+          document.getElementById('rowPbjt').style.display = 'flex';
+          document.getElementById('rowAdmin').style.display = 'flex';
+          document.getElementById('pbjtNote').style.display = 'block';
+          document.getElementById('tariffLabel').textContent = 'Tarif Dasar SPKLU';
+          document.getElementById('tariffRate').textContent = 'Rp 2.466,78 / kWh';
+          document.getElementById('kwhBoxTitle').textContent = '⚡ JUMLAH KWH YANG HARUS DIBELI';
+          document.getElementById('kwhMainRounded').innerHTML = `Saran beli PLN Mobile: <b>${ceilKwh} kWh</b> (dibulatkan ke atas)`;
+        }
+
+        if (nightOn) {
+          document.getElementById('rowNightDiscount').style.display = 'flex';
+          document.getElementById('resDiscount').textContent = '— ' + formatRp(nightSaving);
+        } else {
+          document.getElementById('rowNightDiscount').style.display = 'none';
+        }
+
+        document.getElementById('kwhMainValue').innerHTML = `${kwhBuy.toFixed(2)} <span style="font-size:16px">kWh</span>`;
+        document.getElementById('resListrik').textContent = formatRp(biayaListrik);
+        document.getElementById('resTotal').textContent = formatRp(total);
+        document.getElementById('nightBadge').classList.toggle('show', nightOn);
+
+        // Duration Info
+        document.getElementById('durationValue').textContent = formatDuration(totalMins);
+        const rateDisp = rateNormal < 2 ? `~${rateNormal.toFixed(2)} mnt/kWh` : `~${Math.floor(rateNormal)}m ${Math.round((rateNormal%1)*60)}d/kWh`;
+        document.getElementById('durationSub').textContent = `${netNeeded.toFixed(2)} kWh bersih · ${rateDisp} · ${CHARGER_LABEL[curCharger]}`;
+        document.getElementById('durationBadge').innerHTML = `${Math.round(totalMins)}<br>menit`;
+
+        // Slow zone warning update
+        const noteEl = document.getElementById('slowZoneNote');
+        if (hasSlowZone) {
+          const pct2 = (tgt - 80);
+          const slowLabel = slowFactor === 1.5 ? '~1,5×' : '~2,8×';
+          noteEl.innerHTML = `⚠️ <b>${pct2.toFixed(0)}% terakhir (80%→${tgt}%) dihitung ${slowLabel} lebih lambat.</b> BMS ${ev.brand} otomatis membatasi arus listrik. Estimasi fase lambat: <b>~${formatDuration(mins2)}</b> dari total waktu.`;
+          noteEl.classList.add('show');
+        } else {
+          noteEl.classList.remove('show');
+        }
+
+        document.getElementById('kwhNote').innerHTML = `Daya sel: <b>${netNeeded.toFixed(2)} kWh</b> | Terpakai: <b>${kwhBuy.toFixed(2)} kWh</b> (termasuk loss)`;
+      }
+// =================== MODUL 4: LOG & ANALYSIS LOGIC ===================
+      let logs = JSON.parse(localStorage.getItem('evChargeLogs')) || [];
+
+      // Fungsi Format Tanggal Standar HARI INI
+      function getTodayDateStr() {
+        const d = new Date();
+        return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+      }
+
+      // Lempar Data dari Kalkulator ke Tab Log (Trigger Button)
+      function prepLogFromCalc() {
+        openLogForm();
+        document.getElementById('logDate').value = getTodayDateStr();
+        document.getElementById('logSocCur').value = document.getElementById('socCur').value;
+        document.getElementById('logSocTgt').value = document.getElementById('socTgt').value;
+        
+        // Ambil data cost (hilangkan 'Rp ' dan titik)
+        let costStr = document.getElementById('resTotal').innerText.replace(/[^\d]/g, '');
+        document.getElementById('logCost').value = costStr;
+        
+        // Ambil estimasi KWH (dibulatkan ke atas kalau SPKLU, atau angka net kalau rumah)
+        let isHome = (curMode === 'rumah');
+        let rawKwhText = document.getElementById('kwhMainValue').innerText;
+        let floatKwh = parseFloat(rawKwhText);
+        document.getElementById('logKwh').value = isHome ? floatKwh.toFixed(2) : Math.ceil(floatKwh);
+        
+        document.getElementById('logLoc').value = curMode === 'rumah' ? 'Rumah' : 'SPKLU';
+        document.getElementById('logNote').value = CHARGER_LABEL[curCharger];
+        
+        switchTab('log');
+      }
+
+      function openLogForm() { document.getElementById('logFormArea').style.display = 'block'; }
+      function closeLogForm() { 
+        document.getElementById('logFormArea').style.display = 'none'; 
+        // Reset form
+        ['logId','logOdo','logSocCur','logSocTgt','logCost','logKwh','logNote'].forEach(id => document.getElementById(id).value = '');
+      }
+
+      function saveLogData() {
+        let cost = parseInt(document.getElementById('logCost').value);
+        if (!cost || isNaN(cost)) { alert("Mohon isi estimasi Total Biaya (Rp)"); return; }
+
+        let currentEv = EV_DB[selectedEvIdx];
+        let newLog = {
+          id: document.getElementById('logId').value || Date.now().toString(),
+          evBrand: currentEv.brand,
+          evModel: currentEv.model,
+          date: document.getElementById('logDate').value || getTodayDateStr(),
+          odo: parseInt(document.getElementById('logOdo').value) || 0,
+          socCur: document.getElementById('logSocCur').value,
+          socTgt: document.getElementById('logSocTgt').value,
+          cost: cost,
+          kwh: parseFloat(document.getElementById('logKwh').value) || 0,
+          note: document.getElementById('logNote').value || ''
+        };
+
+        let existingIdx = logs.findIndex(l => l.id === newLog.id);
+        if (existingIdx >= 0) logs[existingIdx] = newLog;
+        else logs.push(newLog);
+
+        // Sortir dari yang terbaru
+        logs.sort((a,b) => new Date(b.date) - new Date(a.date));
+        
+        localStorage.setItem('evChargeLogs', JSON.stringify(logs));
+        closeLogForm(); renderLogs(); renderAnalysis();
+      }
+
+      function deleteLog(id) {
+        if(confirm('Hapus catatan ini?')) {
+          logs = logs.filter(l => l.id !== id);
+          localStorage.setItem('evChargeLogs', JSON.stringify(logs));
+          renderLogs(); renderAnalysis();
+        }
+      }
+
+      function toggleMonth(monthStr) {
+        const content = document.getElementById('month-content-' + monthStr);
+        const chevron = document.getElementById('month-chevron-' + monthStr);
+        content.classList.toggle('open');
+        chevron.classList.toggle('open');
+      }
+
+      function editLog(id) {
+        const l = logs.find(x => x.id === id);
+        if(!l) return;
+        
+        openLogForm();
+        document.getElementById('logId').value = l.id;
+        document.getElementById('logDate').value = l.date;
+        document.getElementById('logOdo').value = l.odo || '';
+        document.getElementById('logSocCur').value = l.socCur || '';
+        document.getElementById('logSocTgt').value = l.socTgt || '';
+        document.getElementById('logCost').value = l.cost || '';
+        document.getElementById('logKwh').value = l.kwh || '';
+        document.getElementById('logNote').value = l.note || '';
+        
+        // Geser layar ke atas secara halus agar form terlihat
+        document.getElementById('tab-log').scrollIntoView({ behavior: 'smooth' });
+      }
+
+      function renderLogs() {
+        const container = document.getElementById('logListArea');
+        
+        // Labeli data lama yang belum punya brand sebagai Jaecoo J5
+        logs = logs.map(l => { if(!l.evBrand){ l.evBrand='Jaecoo'; l.evModel='J5'; } return l; });
+        
+        let currentEv = EV_DB[selectedEvIdx];
+        let evLogs = logs.filter(l => l.evBrand === currentEv.brand && l.evModel === currentEv.model);
+
+        if (evLogs.length === 0) { 
+          container.innerHTML = `<div style="text-align:center;color:var(--muted);font-size:12px;margin-top:20px;">Belum ada catatan untuk ${currentEv.brand} ${currentEv.model}.</div>`; 
+          return; 
+        }
+
+        // Kelompokkan data berdasarkan Tahun-Bulan (YYYY-MM)
+        const groups = {};
+        evLogs.forEach(l => {
+          const ym = l.date.substring(0,7);
+          if(!groups[ym]) groups[ym] = [];
+          groups[ym].push(l);
+        });
+
+        // Urutkan bulan dari yang paling baru
+        const sortedMonths = Object.keys(groups).sort((a,b) => b.localeCompare(a));
+        const currentMonth = new Date().toISOString().slice(0,7);
+        const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+
+        let html = '';
+        sortedMonths.forEach(ym => {
+          const [yyyy, mm] = ym.split('-');
+          const monthLabel = `${monthNames[parseInt(mm)-1]} ${yyyy}`;
+          // Semua bulan otomatis tertutup (tampilan minimalis)
+          const isCurrent = '';
+
+          html += `<div class="log-month-group">
+            <div class="log-month-header" onclick="toggleMonth('${ym}')">
+              <span>📅 ${monthLabel} (${groups[ym].length} Pengisian)</span>
+              <span class="log-month-chevron ${isCurrent}" id="month-chevron-${ym}">▼</span>
+            </div>
+            <div class="log-month-content ${isCurrent}" id="month-content-${ym}">`;
+
+          groups[ym].forEach(l => {
+            let odoText = l.odo > 0 ? `${l.odo.toLocaleString('id-ID')} km` : '<i>Odo tidak dicatat</i>';
+            let dateFormatted = l.date.split('-').reverse().join('-'); // Ubah YYYY-MM-DD ke DD-MM-YYYY
+            html += `
+              <div class="log-item">
+                <div class="log-item-header">
+                  <span>${dateFormatted} &nbsp;·&nbsp; 🛣️ ${odoText}</span>
+                  <div>
+                    <span class="edit-btn" onclick="editLog('${l.id}')">✏️ Edit</span>
+                    <span class="del-btn" onclick="deleteLog('${l.id}')">✕ Hapus</span>
+                  </div>
+                </div>
+                <div class="log-item-body">
+                  <div>
+                    <div class="log-item-title">⚡ ${l.socCur || '?'}% → ${l.socTgt || '?'}% (${l.kwh} kWh)</div>
+                    <div class="log-item-sub">${l.note}</div>
+                  </div>
+                  <div class="log-item-cost">${formatRp(l.cost)}</div>
+                </div>
+              </div>
+            `;
+          });
+
+          html += `</div></div>`;
+        });
+
+        container.innerHTML = html;
+      }
+
+      // --- LOGIKA ANALYSIS BBM (Range 1:10 s/d 1:15, BBM Rp 15.000) ---
+      function closeAnaModal(e) {
+         if(e.target.id === 'anaModal') document.getElementById('anaModal').classList.remove('show');
+      }
+
+      function openAnaModal(ym, monthLabel) {
+         let currentEv = EV_DB[selectedEvIdx];
+         let evLogs = logs.filter(l => l.evBrand === currentEv.brand && l.evModel === currentEv.model);
+         let mLogs = evLogs.filter(l => l.date.startsWith(ym));
+
+         if(mLogs.length === 0) return;
+
+         let totalCost = mLogs.reduce((sum, l) => sum + l.cost, 0);
+         let totalKwh = mLogs.reduce((sum, l) => sum + l.kwh, 0);
+         let freq = mLogs.length;
+         let avgCost = totalCost / freq;
+         let avgKwhCost = totalCost / totalKwh;
+
+         let maxLog = mLogs.reduce((prev, current) => (prev.cost > current.cost) ? prev : current);
+
+         let locCounts = {};
+         mLogs.forEach(l => {
+            let loc = (l.note && l.note.trim() !== '') ? l.note : 'Lokasi Tidak Dicatat';
+            locCounts[loc] = (locCounts[loc] || 0) + 1;
+         });
+         let freqLoc = Object.keys(locCounts).reduce((a, b) => locCounts[a] > locCounts[b] ? a : b);
+
+         let odoLogs = mLogs.filter(l => l.odo > 0).sort((a,b) => a.odo - b.odo);
+         let bbmHtml = '';
+         if(odoLogs.length >= 2) {
+            let distance = odoLogs[odoLogs.length - 1].odo - odoLogs[0].odo;
+            let costBbmMin = (distance / 15) * 15000;
+            let costBbmMax = (distance / 10) * 15000;
+            let saveMin = Math.max(0, costBbmMin - totalCost);
+            let saveMax = Math.max(0, costBbmMax - totalCost);
+            bbmHtml = `
+            <div style="background:rgba(255,209,102,0.08); border:1px dashed rgba(255,209,102,0.4); padding:12px; border-radius:10px; margin-top:16px;">
+               <div style="font-size:11px; font-weight:700; color:var(--yellow); margin-bottom:6px;">⛽ PENGHEMATAN VS BENSIN</div>
+               <div style="font-size:12px; color:var(--text); line-height:1.5;">
+                  Jarak terukur bulan ini: <b>${distance.toLocaleString('id-ID')} km</b>.<br>
+                  Kamu hemat antara <b style="color:var(--yellow);">${formatRp(saveMin)} s.d. ${formatRp(saveMax)}</b> jika dibandingkan memakai mobil bensin dengan BBM Pertamax.
+               </div>
+            </div>`;
+         }
+
+         document.getElementById('modalTitle').innerText = '📊 Statistik ' + monthLabel;
+         let html = `
+            <div style="text-align:center; margin-bottom:20px;">
+               <div style="font-size:26px; font-weight:800; color:var(--green);">${formatRp(totalCost)}</div>
+               <div style="font-size:12px; color:var(--muted); margin-top:4px;">${totalKwh.toFixed(1)} kWh Energi Terserap</div>
+            </div>
+            <div class="stat-row"><span class="stat-label">Frekuensi Cas</span><span class="stat-val">${freq} kali</span></div>
+            <div class="stat-row"><span class="stat-label">Rata-rata per Sesi</span><span class="stat-val">${formatRp(avgCost)}</span></div>
+            <div class="stat-row"><span class="stat-label">Rata-rata Tarif Listrik</span><span class="stat-val">${formatRp(avgKwhCost)} / kWh</span></div>
+            <div class="stat-row"><span class="stat-label">Pengeluaran Terbesar</span><span class="stat-val">${formatRp(maxLog.cost)}<br><span style="font-size:10px;color:var(--muted); font-weight:normal;">(${maxLog.kwh} kWh pd tgl ${maxLog.date.split('-').reverse().join('-')})</span></span></div>
+            <div class="stat-row"><span class="stat-label">Lokasi Cas Terdominan</span><span class="stat-val">${freqLoc}<br><span style="font-size:10px;color:var(--muted); font-weight:normal;">(${locCounts[freqLoc]} kali pengisian)</span></span></div>
+            ${bbmHtml}
+         `;
+         document.getElementById('modalBody').innerHTML = html;
+         document.getElementById('anaModal').classList.add('show');
+      }
+
+      function renderAnalysis() {
+         const container = document.querySelector('#tab-analysis .section');
+         let currentEv = EV_DB[selectedEvIdx];
+         let evLogs = logs.filter(l => l.evBrand === currentEv.brand && l.evModel === currentEv.model);
+
+         if(evLogs.length === 0) {
+            container.innerHTML = `<div style="text-align:center;color:var(--muted);padding:40px 20px;">Belum ada data untuk <b>${currentEv.brand} ${currentEv.model}</b>.</div>`;
+            return;
+         }
+
+         const groups = {};
+         evLogs.forEach(l => {
+            const ym = l.date.substring(0,7);
+            if(!groups[ym]) groups[ym] = [];
+            groups[ym].push(l);
+         });
+         const sortedMonths = Object.keys(groups).sort((a,b) => b.localeCompare(a));
+         const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+
+         let html = `<div class="info-box" style="text-align:center; border-color:var(--border); background:var(--input); margin-bottom:20px;">
+            <p style="font-size:12px; color:var(--muted);">Filter Data: <b>${currentEv.brand} ${currentEv.model}</b></p>
+         </div>`;
+
+         sortedMonths.forEach(ym => {
+            const [yyyy, mm] = ym.split('-');
+            const monthLabel = `${monthNames[parseInt(mm)-1]} ${yyyy}`;
+            let totalCost = groups[ym].reduce((sum, l) => sum + l.cost, 0);
+
+            html += `
+            <div class="ana-box" onclick="openAnaModal('${ym}', '${monthLabel}')">
+               <div class="ana-box-title">BIAYA EV BULAN ${monthLabel.toUpperCase()}</div>
+               <div class="ana-box-cost">${formatRp(totalCost)}</div>
+               <div style="font-size:10px; color:var(--muted); margin-top:8px;">Ketuk untuk lihat detail statistik 👆</div>
+            </div>
+            `;
+         });
+         container.innerHTML = html;
+      }
+      // ============== INIT ==============
+function injectDataJuni() {
+        const dataJuni = [
+          { id: "seed-20260601", evBrand: "Jaecoo", evModel: "J5", date: "2026-06-01", odo: 0, socCur: "", socTgt: "", cost: 46316, kwh: 18.23, note: "DC CCS2 50kW - SPKLU Mall Samanea" },
+          { id: "seed-20260603", evBrand: "Jaecoo", evModel: "J5", date: "2026-06-03", odo: 0, socCur: "", socTgt: "", cost: 50399, kwh: 19.84, note: "AC 22kW - SPKLU Mall Samanea" },
+          { id: "seed-20260607", evBrand: "Jaecoo", evModel: "J5", date: "2026-06-07", odo: 0, socCur: "", socTgt: "", cost: 139398, kwh: 54.86, note: "AC 22kW - SPKLU Mall Samanea" },
+          { id: "seed-20260616", evBrand: "Jaecoo", evModel: "J5", date: "2026-06-16", odo: 0, socCur: "", socTgt: "", cost: 66772, kwh: 26.28, note: "AC 22kW - SPKLU Mall Samanea" },
+          { id: "seed-20260619", evBrand: "Jaecoo", evModel: "J5", date: "2026-06-19", odo: 0, socCur: "", socTgt: "", cost: 75769, kwh: 29.82, note: "AC 22kW - SPKLU Mall Samanea" },
+          { id: "seed-20260623", evBrand: "Jaecoo", evModel: "J5", date: "2026-06-23", odo: 0, socCur: "", socTgt: "", cost: 70403, kwh: 27.71, note: "DC CCS2 50kW - SPKLU Mall Samanea" },
+          { id: "seed-20260625", evBrand: "Jaecoo", evModel: "J5", date: "2026-06-25", odo: 0, socCur: "", socTgt: "", cost: 43872, kwh: 17.27, note: "DC CCS2 50kW - SPKLU Mall Samanea" },
+          { id: "seed-20260626", evBrand: "Jaecoo", evModel: "J5", date: "2026-06-26", odo: 0, socCur: "", socTgt: "", cost: 36903, kwh: 14.52, note: "DC CCS2 50kW - SPKLU Mall Samanea" },
+          { id: "seed-20260627", evBrand: "Jaecoo", evModel: "J5", date: "2026-06-27", odo: 0, socCur: "", socTgt: "", cost: 28930, kwh: 11.39, note: "DC CCS2 50kW - SPKLU Mall Samanea" },
+          { id: "seed-20260629", evBrand: "Jaecoo", evModel: "J5", date: "2026-06-29", odo: 0, socCur: "", socTgt: "", cost: 72746, kwh: 28.63, note: "AC 22kW - SPKLU Mall Samanea" }
+        ];
+
+        let existingLogs = JSON.parse(localStorage.getItem('evChargeLogs')) || [];
+        let newDataAdded = false;
+
+        dataJuni.forEach(newLog => {
+          // Cek apakah data di tanggal dan biaya yang sama persis sudah ada di sistem (mencegah duplikat)
+          let isDuplicate = existingLogs.some(log => log.date === newLog.date && log.cost === newLog.cost);
+          
+          if (!isDuplicate) {
+            existingLogs.push(newLog);
+            newDataAdded = true;
+          }
+        });
+
+        // Jika ada data baru yang masuk, urutkan tanggalnya dan simpan kembali ke localStorage
+        if (newDataAdded) {
+          existingLogs.sort((a,b) => new Date(b.date) - new Date(a.date));
+          localStorage.setItem('evChargeLogs', JSON.stringify(existingLogs));
+          
+          // Memperbarui variabel logs global agar langsung terbaca tanpa perlu refresh
+          logs = existingLogs; 
+        }
+      }
+      function init() {
+        buildEvList();
+        const saved = getSavedDefaultEv();
+        let defIdx = saved ? EV_DB.findIndex(e => e.brand === saved.brand && e.model === saved.model) : -1;
+        if (defIdx < 0) defIdx = EV_DB.findIndex(e => e.brand==='Jaecoo' && e.model==='J5');
+        selectedEvIdx = defIdx >= 0 ? defIdx : 0;
+        selectEv(selectedEvIdx);
+
+        injectDataJuni(); // <--- TAMBAHKAN BARIS INI UNTUK INJEK BULAN JUNI
+        injectDataJuliAgustus(); // <--- TAMBAHKAN BARIS INI
+        
+        renderLogs();
+        renderAnalysis();
+      }
+      window.onload = init;
+    </script>
+  </body>
+</html>

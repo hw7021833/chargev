@@ -1488,38 +1488,8 @@ if (toggleBox) {
          });
          container.innerHTML = html;
       }
-      // ============== INIT ==============
-        let existingLogs = JSON.parse(localStorage.getItem('evChargeLogs')) || [];
-        let newDataAdded = false;
-
-        dataJuni.forEach(newLog => {
-          // Cek apakah data di tanggal dan biaya yang sama persis sudah ada di sistem (mencegah duplikat)
-          let isDuplicate = existingLogs.some(log => log.date === newLog.date && log.cost === newLog.cost);
-          
-          if (!isDuplicate) {
-            existingLogs.push(newLog);
-            newDataAdded = true;
-          }
-        });
-
-        // Jika ada data baru yang masuk, urutkan tanggalnya dan simpan kembali ke localStorage
-        if (newDataAdded) {
-          existingLogs.sort((a,b) => new Date(b.date) - new Date(a.date));
-          localStorage.setItem('evChargeLogs', JSON.stringify(existingLogs));
-          
-          // Memperbarui variabel logs global agar langsung terbaca tanpa perlu refresh
-          logs = existingLogs; 
-        }
-      }
-      function init() {
-        buildEvList();
-        const saved = getSavedDefaultEv();
-        let defIdx = saved ? EV_DB.findIndex(e => e.brand === saved.brand && e.model === saved.model) : -1;
-        if (defIdx < 0) defIdx = EV_DB.findIndex(e => e.brand==='Jaecoo' && e.model==='J5');
-        selectedEvIdx = defIdx >= 0 ? defIdx : 0;
-        selectEv(selectedEvIdx);
-
-function injectAllLogsClean() {
+// ============== INIT ==============
+      function injectAllLogsClean() {
         const dataSemuaBulanClean = [
           // ================= BULAN JUNI 2026 =================
           { id: "clean-20260601", evBrand: "Jaecoo", evModel: "J5", date: "2026-06-01", odo: 0, socCur: "", socTgt: "", cost: 46316, kwh: 18.23, note: "DC CCS2 50kW - SPKLU Mall Samanea" },
@@ -1593,16 +1563,24 @@ function injectAllLogsClean() {
           { id: "clean-20261010", evBrand: "Jaecoo", evModel: "J5", date: "2026-10-10", odo: 0, socCur: "", socTgt: "", cost: 144693, kwh: 56.948, note: "AC TYPE 2 22kW - SPKLU Mall Samanea" }
         ];
 
-        // Reset total log lama yang duplikat, lalu isi ulang dengan data bersih di atas
         localStorage.setItem('evChargeLogs', JSON.stringify(dataSemuaBulanClean));
         logs = dataSemuaBulanClean;
         logs.sort((a,b) => new Date(b.date) - new Date(a.date));
       }
+
+      function init() {
+        buildEvList();
+        const saved = getSavedDefaultEv();
+        let defIdx = saved ? EV_DB.findIndex(e => e.brand === saved.brand && e.model === saved.model) : -1;
+        if (defIdx < 0) defIdx = EV_DB.findIndex(e => e.brand==='Jaecoo' && e.model==='J5');
+        selectedEvIdx = defIdx >= 0 ? defIdx : 0;
+        selectEv(selectedEvIdx);
+
+        injectAllLogsClean(); // <--- Hanya panggil fungsi bersih ini saja
         
         renderLogs();
         renderAnalysis();
       }
-      window.onload = init;
-    </script>
+      window.onload = init;    </script>
   </body>
 </html>

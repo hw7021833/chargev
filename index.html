@@ -7,6 +7,7 @@
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0"
     />
     <title>EV Charge Calc Pro</title>
+    
     <style>
       *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
       :root{
@@ -365,6 +366,14 @@ body.theme-analysis { background: #110B18; } /* Ungu sangat gelap */
       .stat-label { color:var(--muted); }
       .stat-val { font-weight:700; color:var(--text); text-align:right; max-width:65%; line-height:1.4; }
       @keyframes fadeIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+    /* CSS TAMBAHAN UNTUK VISUAL CHART ANALISIS */
+      .chart-container { display: flex; align-items: flex-end; gap: 8px; height: 130px; padding: 15px 10px 5px; background: rgba(0,0,0,0.2); border-radius: 10px; margin: 12px 0; border: 1px solid rgba(255,255,255,0.05); overflow-x: auto; }
+      .chart-bar-group { flex: 1; display: flex; flex-direction: column; align-items: center; min-width: 42px; height: 100%; justify-content: flex-end; }
+      .chart-bar-val { font-size: 9px; color: var(--muted); margin-bottom: 4px; font-weight: 700; }
+      .chart-bar { width: 100%; background: var(--accent); border-radius: 4px 4px 0 0; transition: height 0.4s ease; min-height: 4px; opacity: 0.85; }
+      .chart-bar.anomaly { background: var(--orange); opacity: 1; box-shadow: 0 0 10px rgba(255,149,0,0.4); }
+      .chart-bar-label { font-size: 10px; color: var(--text); margin-top: 6px; font-weight: 700; text-align: center; }
+      .out-city-badge { background: rgba(255,149,0,0.12); border: 1px solid rgba(255,149,0,0.3); border-radius: 8px; padding: 10px; margin-top: 10px; font-size: 11px; line-height: 1.4; color: var(--text); }
     </style>
   </head>
   <body class="theme-calc">
@@ -652,7 +661,12 @@ body.theme-analysis { background: #110B18; } /* Ungu sangat gelap */
           <div class="section-label" style="margin-bottom:0;">Riwayat (Terbaru)</div>
           <button style="background:none; border:none; color:var(--accent); font-weight:800; font-size:12px; cursor:pointer; background:rgba(0,212,255,0.1); padding:4px 10px; border-radius:6px;" onclick="openLogForm()">+ Manual</button>
         </div>
-        
+        <!-- TOMBOL EKSPOR & IMPOR JSON -->
+     <div style="display: flex; gap: 10px; margin-bottom: 14px;">
+       <button class="btn-primary" style="flex:1; background:rgba(0,212,255,0.15); color:var(--accent); border:1px solid var(--accent); font-size:11px; padding:8px;" onclick="exportLogsJson()">📥 Ekspor JSON</button>
+       <button class="btn-primary" style="flex:1; background:rgba(0,229,160,0.15); color:var(--green); border:1px solid var(--green); font-size:11px; padding:8px;" onclick="document.getElementById('importJsonFile').click()">📤 Impor JSON</button>
+       <input type="file" id="importJsonFile" accept=".json" style="display:none" onchange="importLogsJson(event)">
+     </div>
         <!-- Tempat List Log Muncul -->
         <div id="logListArea"></div>
       </div>
@@ -1450,7 +1464,7 @@ if (toggleBox) {
          document.getElementById('anaModal').classList.add('show');
       }
 
-      function renderAnalysis() {
+function renderAnalysis() {
          const container = document.querySelector('#tab-analysis .section');
          let currentEv = EV_DB[selectedEvIdx];
          let evLogs = logs.filter(l => l.evBrand === currentEv.brand && l.evModel === currentEv.model);
@@ -1466,27 +1480,99 @@ if (toggleBox) {
             if(!groups[ym]) groups[ym] = [];
             groups[ym].push(l);
          });
-         const sortedMonths = Object.keys(groups).sort((a,b) => b.localeCompare(a));
-         const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+         
+         const sortedMonths = Object.keys(groups).sort(); 
+         const monthNames = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agt", "Sep", "Okt", "Nov", "Des"];
+         const fullMonthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
 
-         let html = `<div class="info-box" style="text-align:center; border-color:var(--border); background:var(--input); margin-bottom:20px;">
-            <p style="font-size:12px; color:var(--muted);">Filter Data: <b>${currentEv.brand} ${currentEv.model}</b></p>
-         </div>`;
+         let totalAllCost = 0;
+         sortedMonths.forEach(ym => {
+            totalAllCost += groups[ym].reduce((sum, l) => sum + l.cost, 0);
+         });
+         let avgMonthlyCost = totalAllCost / sortedMonths.length;
 
+         let maxMonthCost = Math.max(...sortedMonths.map(ym => groups[ym].reduce((s, l) => s + l.cost, 0)), 1);
+         let chartBarsHtml = '';
+         
          sortedMonths.forEach(ym => {
             const [yyyy, mm] = ym.split('-');
-            const monthLabel = `${monthNames[parseInt(mm)-1]} ${yyyy}`;
-            let totalCost = groups[ym].reduce((sum, l) => sum + l.cost, 0);
+            const mLabel = monthNames[parseInt(mm)-1];
+            const mCost = groups[ym].reduce((sum, l) => sum + l.cost, 0);
+            const heightPercent = Math.max(Math.round((mCost / maxMonthCost) * 100), 8);
+            const isAnomaly = mCost > (avgMonthlyCost * 1.25);
+            
+            chartBarsHtml += `
+               <div class="chart-bar-group" onclick="openAnaModal('${ym}', '${fullMonthNames[parseInt(mm)-1]} ${yyyy}')" style="cursor:pointer;" title="Ketuk untuk detail">
+                  <div class="chart-bar-val">${Math.round(mCost/1000)}k</div>
+                  <div class="chart-bar ${isAnomaly ? 'anomaly' : ''}" style="height: ${heightPercent}%;"></div>
+                  <div class="chart-bar-label">${mLabel}</div>
+               </div>
+            `;
+         });
 
-            html += `
-            <div class="ana-box" onclick="openAnaModal('${ym}', '${monthLabel}')">
-               <div class="ana-box-title">BIAYA EV BULAN ${monthLabel.toUpperCase()}</div>
-               <div class="ana-box-cost">${formatRp(totalCost)}</div>
-               <div style="font-size:10px; color:var(--muted); margin-top:8px;">Ketuk untuk lihat detail statistik 👆</div>
+         let monthDetailsHtml = '';
+         const sortedMonthsDesc = [...sortedMonths].reverse();
+
+         sortedMonthsDesc.forEach(ym => {
+            const [yyyy, mm] = ym.split('-');
+            const monthLabel = `${fullMonthNames[parseInt(mm)-1]} ${yyyy}`;
+            const mLogs = groups[ym];
+            const totalCost = mLogs.reduce((sum, l) => sum + l.cost, 0);
+            const totalKwh = mLogs.reduce((sum, l) => sum + l.kwh, 0);
+            const isAnomaly = totalCost > (avgMonthlyCost * 1.25);
+
+            let outOfTownHints = [];
+            mLogs.forEach(l => {
+               const n = (l.note || '').toLowerCase();
+               if(n.includes('km') || n.includes('rest area') || n.includes('bandung') || n.includes('surakarta') || n.includes('soloraya') || n.includes('tol') || n.includes('travoy') || n.includes('amanah')) {
+                  outOfTownHints.push(l.note);
+               }
+            });
+            outOfTownHints = [...new Set(outOfTownHints)];
+
+            let hintBox = '';
+            if(outOfTownHints.length > 0) {
+               let hintList = outOfTownHints.slice(0, 3).map(h => `<li>${h}</li>`).join('');
+               hintBox = `
+                  <div class="out-city-badge">
+                     <b style="color:var(--orange);">🚗 Jejak Perjalanan Terdeteksi:</b>
+                     <ul style="margin:4px 0 0 16px; font-size:10px; color:var(--muted);">${hintList}</ul>
+                  </div>
+               `;
+            } else if(isAnomaly) {
+               hintBox = `
+                  <div class="out-city-badge">
+                     <b style="color:var(--yellow);">💡 Catatan:</b> Biaya agak tinggi karena frekuensi cas lebih sering dari biasanya.
+                  </div>
+               `;
+            }
+
+            monthDetailsHtml += `
+            <div class="ana-box" onclick="openAnaModal('${ym}', '${monthLabel}')" style="text-align:left; position:relative;">
+               <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                  <div>
+                     <div class="ana-box-title" style="margin-bottom:2px; text-align:left;">BULAN ${monthLabel.toUpperCase()} ${isAnomaly ? '🔥 <span style="color:var(--orange); font-size:9px;">(LONJAKAN)</span>' : ''}</div>
+                     <div style="font-size:11px; color:var(--muted);">${mLogs.length}× Pengisian · ${totalKwh.toFixed(1)} kWh</div>
+                  </div>
+                  <div class="ana-box-cost" style="font-size:20px;">${formatRp(totalCost)}</div>
+               </div>
+               ${hintBox}
             </div>
             `;
          });
-         container.innerHTML = html;
+
+         container.innerHTML = `
+            <div class="info-box" style="border-color:var(--border); background:var(--input); margin-bottom:16px;">
+               <h3 style="font-size:12px; color:var(--text); margin-bottom:6px;">📈 Tren Biaya Bulanan</h3>
+               <p style="font-size:11px; color:var(--muted); margin-bottom:4px;">Rata-rata normal: <b style="color:var(--green);">${formatRp(avgMonthlyCost)} / bln</b>. Batang oranye (<span style="color:var(--orange)">■</span>) menandakan anomali lonjakan biaya.</p>
+               <div class="chart-container">
+                  ${chartBarsHtml}
+               </div>
+            </div>
+
+            <div class="section-label" style="margin-bottom:10px;">Riwayat Per Bulan (Ketuk untuk detail)</div>
+            ${monthDetailsHtml}
+         `;
       }
 // ============== INIT ==============
       function injectAllLogsClean() {
@@ -1581,6 +1667,42 @@ if (toggleBox) {
         renderLogs();
         renderAnalysis();
       }
+      // Fungsi untuk Download/Ekspor Data ke File JSON
+   function exportLogsJson() {
+     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(logs, null, 2));
+     const downloadAnchor = document.createElement('a');
+     downloadAnchor.setAttribute("href", dataStr);
+     downloadAnchor.setAttribute("download", "ev-logs-backup-" + new Date().toISOString().slice(0,10) + ".json");
+     document.body.appendChild(downloadAnchor);
+     downloadAnchor.click();
+     downloadAnchor.remove();
+   }
+
+   // Fungsi untuk Upload/Impor Data dari File JSON
+   function importLogsJson(event) {
+     const fileReader = new FileReader();
+     if (event.target.files[0]) {
+       fileReader.readAsText(event.target.files[0], "UTF-8");
+       fileReader.onload = (e) => {
+         try {
+           const importedData = JSON.parse(e.target.result);
+           if (Array.isArray(importedData)) {
+             if(confirm("Impor data akan menggabungkan/memperbarui riwayat log Anda. Lanjutkan?")) {
+               logs = importedData;
+               localStorage.setItem('evChargeLogs', JSON.stringify(logs));
+               renderLogs();
+               renderAnalysis();
+               alert("Berhasil mengimpor data log!");
+             }
+           } else {
+             alert("Format file JSON tidak valid.");
+           }
+         } catch (error) {
+           alert("Gagal membaca file JSON.");
+         }
+       };
+     }
+   }
       window.onload = init;    </script>
   </body>
 </html>

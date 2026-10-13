@@ -1489,20 +1489,6 @@ if (toggleBox) {
          container.innerHTML = html;
       }
       // ============== INIT ==============
-function injectDataJuni() {
-        const dataJuni = [
-          { id: "seed-20260601", evBrand: "Jaecoo", evModel: "J5", date: "2026-06-01", odo: 0, socCur: "", socTgt: "", cost: 46316, kwh: 18.23, note: "DC CCS2 50kW - SPKLU Mall Samanea" },
-          { id: "seed-20260603", evBrand: "Jaecoo", evModel: "J5", date: "2026-06-03", odo: 0, socCur: "", socTgt: "", cost: 50399, kwh: 19.84, note: "AC 22kW - SPKLU Mall Samanea" },
-          { id: "seed-20260607", evBrand: "Jaecoo", evModel: "J5", date: "2026-06-07", odo: 0, socCur: "", socTgt: "", cost: 139398, kwh: 54.86, note: "AC 22kW - SPKLU Mall Samanea" },
-          { id: "seed-20260616", evBrand: "Jaecoo", evModel: "J5", date: "2026-06-16", odo: 0, socCur: "", socTgt: "", cost: 66772, kwh: 26.28, note: "AC 22kW - SPKLU Mall Samanea" },
-          { id: "seed-20260619", evBrand: "Jaecoo", evModel: "J5", date: "2026-06-19", odo: 0, socCur: "", socTgt: "", cost: 75769, kwh: 29.82, note: "AC 22kW - SPKLU Mall Samanea" },
-          { id: "seed-20260623", evBrand: "Jaecoo", evModel: "J5", date: "2026-06-23", odo: 0, socCur: "", socTgt: "", cost: 70403, kwh: 27.71, note: "DC CCS2 50kW - SPKLU Mall Samanea" },
-          { id: "seed-20260625", evBrand: "Jaecoo", evModel: "J5", date: "2026-06-25", odo: 0, socCur: "", socTgt: "", cost: 43872, kwh: 17.27, note: "DC CCS2 50kW - SPKLU Mall Samanea" },
-          { id: "seed-20260626", evBrand: "Jaecoo", evModel: "J5", date: "2026-06-26", odo: 0, socCur: "", socTgt: "", cost: 36903, kwh: 14.52, note: "DC CCS2 50kW - SPKLU Mall Samanea" },
-          { id: "seed-20260627", evBrand: "Jaecoo", evModel: "J5", date: "2026-06-27", odo: 0, socCur: "", socTgt: "", cost: 28930, kwh: 11.39, note: "DC CCS2 50kW - SPKLU Mall Samanea" },
-          { id: "seed-20260629", evBrand: "Jaecoo", evModel: "J5", date: "2026-06-29", odo: 0, socCur: "", socTgt: "", cost: 72746, kwh: 28.63, note: "AC 22kW - SPKLU Mall Samanea" }
-        ];
-
         let existingLogs = JSON.parse(localStorage.getItem('evChargeLogs')) || [];
         let newDataAdded = false;
 

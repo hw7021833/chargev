@@ -1533,8 +1533,85 @@ function injectDataJuni() {
         selectedEvIdx = defIdx >= 0 ? defIdx : 0;
         selectEv(selectedEvIdx);
 
-        injectDataJuni(); // <--- TAMBAHKAN BARIS INI UNTUK INJEK BULAN JUNI
-        injectDataJuliAgustus(); // <--- TAMBAHKAN BARIS INI
+function injectAllLogsClean() {
+        const dataSemuaBulanClean = [
+          // ================= BULAN JUNI 2026 =================
+          { id: "clean-20260601", evBrand: "Jaecoo", evModel: "J5", date: "2026-06-01", odo: 0, socCur: "", socTgt: "", cost: 46316, kwh: 18.23, note: "DC CCS2 50kW - SPKLU Mall Samanea" },
+          { id: "clean-20260603", evBrand: "Jaecoo", evModel: "J5", date: "2026-06-03", odo: 0, socCur: "", socTgt: "", cost: 50399, kwh: 19.84, note: "AC 22kW - SPKLU Mall Samanea" },
+          { id: "clean-20260607", evBrand: "Jaecoo", evModel: "J5", date: "2026-06-07", odo: 0, socCur: "", socTgt: "", cost: 139398, kwh: 54.86, note: "AC 22kW - SPKLU Mall Samanea" },
+          { id: "clean-20260616", evBrand: "Jaecoo", evModel: "J5", date: "2026-06-16", odo: 0, socCur: "", socTgt: "", cost: 66772, kwh: 26.28, note: "AC 22kW - SPKLU Mall Samanea" },
+          { id: "clean-20260619", evBrand: "Jaecoo", evModel: "J5", date: "2026-06-19", odo: 0, socCur: "", socTgt: "", cost: 75769, kwh: 29.82, note: "AC 22kW - SPKLU Mall Samanea" },
+          { id: "clean-20260623", evBrand: "Jaecoo", evModel: "J5", date: "2026-06-23", odo: 0, socCur: "", socTgt: "", cost: 70403, kwh: 27.71, note: "DC CCS2 50kW - SPKLU Mall Samanea" },
+          { id: "clean-20260625", evBrand: "Jaecoo", evModel: "J5", date: "2026-06-25", odo: 0, socCur: "", socTgt: "", cost: 43872, kwh: 17.27, note: "DC CCS2 50kW - SPKLU Mall Samanea" },
+          { id: "clean-20260626", evBrand: "Jaecoo", evModel: "J5", date: "2026-06-26", odo: 0, socCur: "", socTgt: "", cost: 36903, kwh: 14.52, note: "DC CCS2 50kW - SPKLU Mall Samanea" },
+          { id: "clean-20260627", evBrand: "Jaecoo", evModel: "J5", date: "2026-06-27", odo: 0, socCur: "", socTgt: "", cost: 28930, kwh: 11.39, note: "DC CCS2 50kW - SPKLU Mall Samanea" },
+          { id: "clean-20260629", evBrand: "Jaecoo", evModel: "J5", date: "2026-06-29", odo: 0, socCur: "", socTgt: "", cost: 72746, kwh: 28.63, note: "AC 22kW - SPKLU Mall Samanea" },
+
+          // ================= BULAN JULI 2026 =================
+          { id: "clean-20260702", evBrand: "Jaecoo", evModel: "J5", date: "2026-07-02", odo: 0, socCur: "", socTgt: "", cost: 52930, kwh: 20.832, note: "AC TYPE 2 22kW - SPKLU Mall Samanea" },
+          { id: "clean-20260704-1", evBrand: "Jaecoo", evModel: "J5", date: "2026-07-04", odo: 0, socCur: "", socTgt: "", cost: 57544, kwh: 22.648, note: "CCS2 50kW DC - SPKLU Mall Samanea" },
+          { id: "clean-20260704-2", evBrand: "Jaecoo", evModel: "J5", date: "2026-07-04", odo: 0, socCur: "", socTgt: "", cost: 80335, kwh: 29.606, note: "CCS2 200kW DC - SPKLU Rest Area KM 343A" },
+          { id: "clean-20260704-3", evBrand: "Jaecoo", evModel: "J5", date: "2026-07-04", odo: 0, socCur: "", socTgt: "", cost: 56712, kwh: 20.900, note: "CCS2 50kW DC - SPKLU Rest Area KM 86 A" },
+          { id: "clean-20260704-4", evBrand: "Jaecoo", evModel: "J5", date: "2026-07-04", odo: 0, socCur: "", socTgt: "", cost: 106369, kwh: 39.560, note: "CCS2 100kW DC - SPKLU HVT PLN ULP Surakarta Kota" },
+          { id: "clean-20260706-1", evBrand: "Jaecoo", evModel: "J5", date: "2026-07-06", odo: 0, socCur: "", socTgt: "", cost: 35627, kwh: 13.250, note: "AC Type 2 22kW - SPKLU PLN ULP Surakarta Kota" },
+          { id: "clean-20260706-2", evBrand: "Jaecoo", evModel: "J5", date: "2026-07-06", odo: 0, socCur: "", socTgt: "", cost: 41386, kwh: 15.392, note: "CCS2 100kW DC - SPKLU HVT PLN ULP Surakarta Kota" },
+          { id: "clean-20260706-3", evBrand: "Jaecoo", evModel: "J5", date: "2026-07-06", odo: 0, socCur: "", socTgt: "", cost: 124367, kwh: 46.682, note: "CCS2 120kW DC - SPKLU CTR Amanah Raharjo KM 229 B" },
+          { id: "clean-20260707", evBrand: "Jaecoo", evModel: "J5", date: "2026-07-07", odo: 0, socCur: "", socTgt: "", cost: 62669, kwh: 24.428, note: "CCS2 200kW DC - SPKLU HVT Rest Area Pinang KM 13,5" },
+          { id: "clean-20260708", evBrand: "Jaecoo", evModel: "J5", date: "2026-07-08", odo: 0, socCur: "", socTgt: "", cost: 97117, kwh: 38.223, note: "AC TYPE 2 22kW - SPKLU Terrace 9A Suvarna Sutera" },
+          { id: "clean-20260711", evBrand: "Jaecoo", evModel: "J5", date: "2026-07-11", odo: 0, socCur: "", socTgt: "", cost: 85831, kwh: 33.781, note: "AC TYPE 2 22kW - SPKLU Terrace 9A Suvarna Sutera" },
+          { id: "clean-20260714", evBrand: "Jaecoo", evModel: "J5", date: "2026-07-14", odo: 0, socCur: "", socTgt: "", cost: 111274, kwh: 43.795, note: "AC TYPE 2 22kW - SPKLU Mall Samanea" },
+          { id: "clean-20260718", evBrand: "Jaecoo", evModel: "J5", date: "2026-07-18", odo: 0, socCur: "", socTgt: "", cost: 59925, kwh: 23.585, note: "CCS2 50kW DC - SPKLU Mall Samanea" },
+          { id: "clean-20260719", evBrand: "Jaecoo", evModel: "J5", date: "2026-07-19", odo: 0, socCur: "", socTgt: "", cost: 53131, kwh: 20.710, note: "AC Type 2 22kW - SPKLU Tangcity" },
+          { id: "clean-20260720", evBrand: "Jaecoo", evModel: "J5", date: "2026-07-20", odo: 0, socCur: "", socTgt: "", cost: 26399, kwh: 10.290, note: "CCS2 200kW DC - SPKLU HVT Rest Area Pinang KM 13,5" },
+          { id: "clean-20260722-1", evBrand: "Jaecoo", evModel: "J5", date: "2026-07-22", odo: 0, socCur: "", socTgt: "", cost: 45407, kwh: 17.871, note: "CCS2 50kW DC - SPKLU Mall Samanea" },
+          { id: "clean-20260722-2", evBrand: "Jaecoo", evModel: "J5", date: "2026-07-22", odo: 0, socCur: "", socTgt: "", cost: 37286, kwh: 14.675, note: "AC TYPE 2 22kW - SPKLU Mall Samanea" },
+          { id: "clean-20260724", evBrand: "Jaecoo", evModel: "J5", date: "2026-07-24", odo: 0, socCur: "", socTgt: "", cost: 56078, kwh: 22.071, note: "AC TYPE 2 22kW - SPKLU Mall Samanea" },
+          { id: "clean-20260725", evBrand: "Jaecoo", evModel: "J5", date: "2026-07-25", odo: 0, socCur: "", socTgt: "", cost: 34939, kwh: 13.751, note: "CCS2 200kW DC - SPKLU Travoy KM 88 A" },
+          { id: "clean-20260726-1", evBrand: "Jaecoo", evModel: "J5", date: "2026-07-26", odo: 0, socCur: "", socTgt: "", cost: 57097, kwh: 22.256, note: "CCS2 60kW DC - SPKLU HVT Rest Area Pinang KM 13,5" },
+          { id: "clean-20260726-2", evBrand: "Jaecoo", evModel: "J5", date: "2026-07-26", odo: 0, socCur: "", socTgt: "", cost: 33598, kwh: 12.611, note: "AC TYPE 2 22kW - SPKLU PLN Trans Studio Mall Bandung" },
+          { id: "clean-20260726-3", evBrand: "Jaecoo", evModel: "J5", date: "2026-07-26", odo: 0, socCur: "", socTgt: "", cost: 33057, kwh: 12.408, note: "CCS2 60kW DC - SPKLU PLN Trans Studio Mall Bandung" },
+          { id: "clean-20260729", evBrand: "Jaecoo", evModel: "J5", date: "2026-07-29", odo: 0, socCur: "", socTgt: "", cost: 50099, kwh: 19.528, note: "CCS2 60kW DC - SPKLU HVT Rest Area Pinang KM 13,5" },
+          { id: "clean-20260730", evBrand: "Jaecoo", evModel: "J5", date: "2026-07-30", odo: 0, socCur: "", socTgt: "", cost: 59452, kwh: 23.399, note: "AC TYPE 2 22kW - SPKLU Mall Samanea" },
+
+          // ================= BULAN AGUSTUS 2026 =================
+          { id: "clean-20260802-1", evBrand: "Jaecoo", evModel: "J5", date: "2026-08-02", odo: 0, socCur: "", socTgt: "", cost: 53852, kwh: 21.195, note: "CCS2 - 50 kW DC @ SPKLU Mall Samanea" },
+          { id: "clean-20260802-2", evBrand: "Jaecoo", evModel: "J5", date: "2026-08-02", odo: 0, socCur: "", socTgt: "", cost: 36395, kwh: 14.324, note: "AC TYPE 2 - 22 kW @ SPKLU Mall Samanea" },
+          { id: "clean-20260806", evBrand: "Jaecoo", evModel: "J5", date: "2026-08-06", odo: 0, socCur: "", socTgt: "", cost: 128440, kwh: 50.551, note: "AC TYPE 2 - 22 kW @ SPKLU Mall Samanea" },
+          { id: "clean-20260811-1", evBrand: "Jaecoo", evModel: "J5", date: "2026-08-11", odo: 0, socCur: "", socTgt: "", cost: 8461, kwh: 3.330, note: "AC TYPE 2 - 22 kW @ SPKLU Yaski (Heartline)" },
+          { id: "clean-20260811-2", evBrand: "Jaecoo", evModel: "J5", date: "2026-08-11", odo: 0, socCur: "", socTgt: "", cost: 34835, kwh: 13.710, note: "AC TYPE 2 - 22 kW @ SPKLU Yaski (Heartline)" },
+          { id: "clean-20260811-3", evBrand: "Jaecoo", evModel: "J5", date: "2026-08-11", odo: 0, socCur: "", socTgt: "", cost: 97043, kwh: 38.194, note: "AC TYPE 2 - 22 kW @ SPKLU Mall Samanea" },
+          { id: "clean-20260816-1", evBrand: "Jaecoo", evModel: "J5", date: "2026-08-16", odo: 0, socCur: "", socTgt: "", cost: 51705, kwh: 20.350, note: "CCS2 - 50 kW DC @ SPKLU Mall Samanea" },
+          { id: "clean-20260816-2", evBrand: "Jaecoo", evModel: "J5", date: "2026-08-16", odo: 0, socCur: "", socTgt: "", cost: 35086, kwh: 13.809, note: "AC TYPE 2 - 22 kW @ SPKLU Mall Samanea" },
+          { id: "clean-20260818", evBrand: "Jaecoo", evModel: "J5", date: "2026-08-18", odo: 0, socCur: "", socTgt: "", cost: 102539, kwh: 40.357, note: "AC TYPE 2 - 22 kW @ SPKLU Mall Samanea" },
+          { id: "clean-20260822", evBrand: "Jaecoo", evModel: "J5", date: "2026-08-22", odo: 0, socCur: "", socTgt: "", cost: 102605, kwh: 40.383, note: "AC TYPE 2 - 22 kW @ SPKLU Mall Samanea" },
+          { id: "clean-20260827", evBrand: "Jaecoo", evModel: "J5", date: "2026-08-27", odo: 0, socCur: "", socTgt: "", cost: 64125, kwh: 25.238, note: "CCS2 - 50 kW DC @ SPKLU Mall Samanea" },
+          { id: "clean-20260828", evBrand: "Jaecoo", evModel: "J5", date: "2026-08-28", odo: 0, socCur: "", socTgt: "", cost: 53568, kwh: 21.083, note: "CCS2 - 240 kW DC @ ZORA SPKLU Signature" },
+          { id: "clean-20260829-1", evBrand: "Jaecoo", evModel: "J5", date: "2026-08-29", odo: 0, socCur: "", socTgt: "", cost: 41390, kwh: 16.290, note: "CCS2 - 50 kW DC @ SPKLU Mall Samanea" },
+          { id: "clean-20260829-2", evBrand: "Jaecoo", evModel: "J5", date: "2026-08-29", odo: 0, socCur: "", socTgt: "", cost: 37630, kwh: 14.810, note: "AC TYPE 2 - 22 kW @ SPKLU Mall Samanea" },
+
+          // ================= BULAN SEPTEMBER 2026 =================
+          { id: "clean-20260903", evBrand: "Jaecoo", evModel: "J5", date: "2026-09-03", odo: 0, socCur: "", socTgt: "", cost: 71999, kwh: 28.337, note: "CCS2 50kW DC - SPKLU Mall Samanea" },
+          { id: "clean-20260906", evBrand: "Jaecoo", evModel: "J5", date: "2026-09-06", odo: 0, socCur: "", socTgt: "", cost: 110756, kwh: 43.591, note: "AC TYPE 2 22kW - SPKLU Mall Samanea" },
+          { id: "clean-20260911-1", evBrand: "Jaecoo", evModel: "J5", date: "2026-09-11", odo: 0, socCur: "", socTgt: "", cost: 74161, kwh: 29.188, note: "CCS2 50kW DC - SPKLU Mall Samanea" },
+          { id: "clean-20260911-2", evBrand: "Jaecoo", evModel: "J5", date: "2026-09-11", odo: 0, socCur: "", socTgt: "", cost: 24710, kwh: 9.725, note: "CCS2 50kW DC - SPKLU Mall Samanea" },
+          { id: "clean-20260912", evBrand: "Jaecoo", evModel: "J5", date: "2026-09-12", odo: 0, socCur: "", socTgt: "", cost: 30561, kwh: 12.028, note: "AC TYPE 2 22kW - SPKLU PLN Terrace 9A Suvarna Sutera" },
+          { id: "clean-20260915", evBrand: "Jaecoo", evModel: "J5", date: "2026-09-15", odo: 0, socCur: "", socTgt: "", cost: 101032, kwh: 39.764, note: "AC TYPE 2 22kW - SPKLU PLN Terrace 9A Suvarna Sutera" },
+          { id: "clean-20260920", evBrand: "Jaecoo", evModel: "J5", date: "2026-09-20", odo: 0, socCur: "", socTgt: "", cost: 126059, kwh: 49.614, note: "AC TYPE 2 22kW - SPKLU Mall Samanea" },
+          { id: "clean-20260923-1", evBrand: "Jaecoo", evModel: "J5", date: "2026-09-23", odo: 0, socCur: "", socTgt: "", cost: 2033, kwh: 0.800, note: "AC TYPE 2 22kW - SPKLU Flavor Bliss Suvarna Sutera" },
+          { id: "clean-20260923-2", evBrand: "Jaecoo", evModel: "J5", date: "2026-09-23", odo: 0, socCur: "", socTgt: "", cost: 83033, kwh: 32.680, note: "CCS2 25kW - SPKLU Flavor Bliss Suvarna Sutera" },
+          { id: "clean-20260926", evBrand: "Jaecoo", evModel: "J5", date: "2026-09-26", odo: 0, socCur: "", socTgt: "", cost: 117029, kwh: 46.060, note: "AC TYPE 2 22kW - SPKLU Mall Samanea" },
+
+          // ================= BULAN OKTOBER 2026 =================
+          { id: "clean-20261001", evBrand: "Jaecoo", evModel: "J5", date: "2026-10-01", odo: 0, socCur: "", socTgt: "", cost: 123909, kwh: 48.768, note: "AC TYPE 2 22kW - SPKLU Mall Samanea" },
+          { id: "clean-20261005", evBrand: "Jaecoo", evModel: "J5", date: "2026-10-05", odo: 0, socCur: "", socTgt: "", cost: 135907, kwh: 53.490, note: "AC TYPE 2 22kW - SPKLU PLN Terrace 9A Suvarna Sutera" },
+          { id: "clean-20261010", evBrand: "Jaecoo", evModel: "J5", date: "2026-10-10", odo: 0, socCur: "", socTgt: "", cost: 144693, kwh: 56.948, note: "AC TYPE 2 22kW - SPKLU Mall Samanea" }
+        ];
+
+        // Reset total log lama yang duplikat, lalu isi ulang dengan data bersih di atas
+        localStorage.setItem('evChargeLogs', JSON.stringify(dataSemuaBulanClean));
+        logs = dataSemuaBulanClean;
+        logs.sort((a,b) => new Date(b.date) - new Date(a.date));
+      }
         
         renderLogs();
         renderAnalysis();
